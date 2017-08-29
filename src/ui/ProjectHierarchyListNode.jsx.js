@@ -1,0 +1,107 @@
+import React, { PureComponent } from 'react';
+
+import { Block, Flex, Icon, Label } from 'fontoxml-vendor-fds/components';
+
+import {
+	applyCss,
+	border,
+	borderLeft,
+	color,
+	flex,
+	paddingLeft,
+	paddingRight,
+	spaceHorizontal
+} from 'fontoxml-vendor-fds/system';
+
+const NON_BREAKING_SPACE = '\u00a0';
+
+const determineStylesByColorName = (basicStyles, colorName) =>
+	applyCss([
+		...basicStyles,
+		{
+			backgroundColor: color(colorName + '-background')
+		},
+		border(color(colorName + '-border')),
+		{
+			':hover': {
+				backgroundColor: color(colorName + '-background:hover'),
+				borderColor: color(colorName + '-border:hover')
+			}
+		}
+	]);
+
+const determineStyles = (node, isDescendantSelected, isSelected) => {
+	const styles = [
+		{ alignItems: 'center' },
+		!node.isPlaceholder && { cursor: 'pointer' },
+		flex('horizontal'),
+		{ paddingBottom: '.375rem', paddingTop: '.375rem' },
+		paddingLeft('s'),
+		paddingRight('s'),
+		spaceHorizontal('s')
+	];
+
+	if (isSelected) {
+		return determineStylesByColorName(styles, 'structure-view-item-active-document');
+	}
+
+	if (isDescendantSelected) {
+		return determineStylesByColorName(styles, 'structure-view-item-parent-of-active-document');
+	}
+
+	return determineStylesByColorName(styles, 'structure-view-item');
+};
+
+const childrenContainerStyles = [
+	borderLeft('#b3b3b3', '1px', 'dotted'),
+	{ marginLeft: 'calc(1rem - 2px)' },
+	paddingLeft('l')
+];
+
+class ProjectHierarchyListNode extends PureComponent {
+	handleItemClick = () => {
+		if (this.props.node.isPlaceholder) {
+			return;
+		}
+
+		this.props.onItemClick(this.props.node);
+	};
+
+	render() {
+		const { node, onItemClick, selectedAncestors, selectedNode } = this.props;
+
+		const isSelected = selectedNode && selectedNode.rootNodeId === node.contextNodeId;
+		const isDescendantSelected = selectedAncestors.some(
+			selectedAncestor => selectedAncestor === node.contextNodeId
+		);
+
+		return (
+			<Block>
+				<Flex
+					{...determineStyles(node, isDescendantSelected, isSelected)}
+					onClick={this.handleItemClick}
+				>
+					<Icon icon={node.icon} />
+
+					<Label flex="1">{node.title || NON_BREAKING_SPACE}</Label>
+				</Flex>
+
+				{node.children.length > 0 && (
+					<Block applyCss={childrenContainerStyles}>
+						{node.children.map((childNode, index) => (
+							<ProjectHierarchyListNode
+								key={childNode.id || index}
+								node={childNode}
+								onItemClick={onItemClick}
+								selectedAncestors={selectedAncestors}
+								selectedNode={selectedNode}
+							/>
+						))}
+					</Block>
+				)}
+			</Block>
+		);
+	}
+}
+
+export default ProjectHierarchyListNode;

@@ -1,0 +1,13 @@
+{
+	"open-project-browser": {
+		"initialData": {
+			"linkableElementsQuery": "//*[@id]",
+			"modalPrimaryButtonLabel": "t__Insert",
+			"modalTitle": "t__Select an element"
+		},
+		"steps":
+		{
+			"type": "modal/ProjectBrowserModal"
+		}
+	}
+}
