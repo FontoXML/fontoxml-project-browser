@@ -1,5 +1,59 @@
 {
 	"open-project-browser": {
+		"__documentation": {
+			"summary": "Opens the project browser.",
+			"fontosdk": true,
+			"params": [
+				{
+					"name": "linkableElementsQuery",
+					"type": "XPathQuery",
+					"description": [
+						"(Optional) Selector used to find the nodes which can be selected by the user. ",
+						"Defaults to `//*[@id]`"
+					]
+				},
+				{
+					"name": "modalPrimaryButtonLabel",
+					"type": "string",
+					"description": "(Optional) The label for the primary button. Defaults to `t__Insert`."
+				},
+				{
+					"name": "modalTitle",
+					"type": "string",
+					"description": "(Optional) The title being shown at the top of the modal. Defaults to `t__Select an element`."
+				},
+				{
+					"name": "documentId",
+					"type": "DocumentId",
+					"description": [
+						"(Optional) The document id of the document which should be preselected. ",
+						"This option is commonly used when the modal is used in an edit flow. ",
+						"Should only be used in combination with nodeId"
+					]
+				},
+				{
+					"name": "nodeId",
+					"type": "NodeId",
+					"description": [
+						"(Optional) The node which should be preselected in the preselected document. ",
+						"This option is commonly used when the modal is used in an edit flow. ",
+						"Should only be used in combination with documentId"
+					]
+				}
+			],
+			"returns": [
+				{
+					"name": "documentId",
+					"type": "DocumentId",
+					"description": "The documentId of the document where the selected node is in."
+				},
+				{
+					"name": "nodeId",
+					"type": "NodeId",
+					"description": "The nodeId of the selected node."
+				}
+			]
+		},
 		"initialData": {
 			"linkableElementsQuery": "//*[@id]",
 			"modalPrimaryButtonLabel": "t__Insert",
