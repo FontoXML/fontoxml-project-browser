@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 
+import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
 import documentsManager from 'fontoxml-documents/documentsManager';
+import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
 import NodePreviewWithLinkSelector from 'fontoxml-fx/NodePreviewWithLinkSelector.jsx';
 import structureViewManager from 'fontoxml-structure-view/structureViewManager';
 import t from 'fontoxml-localization/t';
@@ -63,30 +65,42 @@ class ProjectBrowserModal extends Component {
 		selectedNode: null
 	};
 
-	determineNewState = (nodeId, documentId) => {
+	handleHierarchyListItemClick = hierarchyNode => {
 		const selectedHierarchyNodes = [];
-		const selectedNode = documentsManager.getNodeById(nodeId);
+		const rootNode = documentsManager.getNodeById(hierarchyNode.contextNodeId);
 
 		this.hierarchyNodes.find(hierarchyNode =>
-			determineSelectedHierarchyNode(hierarchyNode, selectedHierarchyNodes, selectedNode)
+			determineSelectedHierarchyNode(hierarchyNode, selectedHierarchyNodes, rootNode)
 		);
 
 		if (selectedHierarchyNodes.length === 0) {
 			return;
 		}
 
-		this.setState({
+		const newState = {
 			selectedAncestors: selectedHierarchyNodes,
 			selectedNode: {
-				documentId: documentId || documentsManager.getDocumentIdByNodeId(nodeId),
-				rootNodeId: selectedHierarchyNodes[0],
-				nodeId: nodeId
+				documentId: documentsManager.getDocumentIdByNodeId(hierarchyNode.contextNodeId),
+				rootNodeId: hierarchyNode.contextNodeId
 			}
-		});
-	};
+		};
 
-	handleHierarchyListItemClick = hierarchyNode => {
-		this.determineNewState(hierarchyNode.contextNodeId, null);
+		if (
+			evaluateXPathToBoolean(
+				'let $selectableNodes := ' +
+					this.props.data.linkableElementsQuery +
+					' return some $node in $selectableNodes satisfies . is $node',
+				rootNode,
+				readOnlyBlueprint
+			)
+		) {
+			newState.selectedNode = {
+				...newState.selectedNode,
+				nodeId: hierarchyNode.contextNodeId
+			};
+		}
+
+		this.setState(newState);
 	};
 
 	handlePreviewItemClick = nodeId =>
@@ -155,7 +169,7 @@ class ProjectBrowserModal extends Component {
 					<Button
 						type="primary"
 						label={modalPrimaryButtonLabel}
-						isDisabled={!selectedNode}
+						isDisabled={!selectedNode || !selectedNode.nodeId}
 						onClick={this.handleSubmitButtonClick}
 					/>
 				</ModalFooter>
@@ -167,7 +181,25 @@ class ProjectBrowserModal extends Component {
 		const { documentId, nodeId } = this.props.data;
 
 		if (nodeId) {
-			this.determineNewState(nodeId, documentId);
+			const selectedHierarchyNodes = [];
+			const selectedNode = documentsManager.getNodeById(nodeId);
+
+			this.hierarchyNodes.find(hierarchyNode =>
+				determineSelectedHierarchyNode(hierarchyNode, selectedHierarchyNodes, selectedNode)
+			);
+
+			if (selectedHierarchyNodes.length === 0) {
+				return;
+			}
+
+			this.setState({
+				selectedAncestors: selectedHierarchyNodes,
+				selectedNode: {
+					documentId: documentId || documentsManager.getDocumentIdByNodeId(nodeId),
+					rootNodeId: selectedHierarchyNodes[0],
+					nodeId: nodeId
+				}
+			});
 		}
 	}
 }
