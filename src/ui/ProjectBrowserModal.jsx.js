@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
 import documentsManager from 'fontoxml-documents/documentsManager';
 import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
-import NodePreviewWithLinkSelector from 'fontoxml-fx/NodePreviewWithLinkSelector.jsx';
+import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
 import structureViewManager from 'fontoxml-structure-view/structureViewManager';
 import t from 'fontoxml-localization/t';
 
@@ -151,7 +151,7 @@ class ProjectBrowserModal extends Component {
 
 						{selectedNode && (
 							<ModalContent flex="2" flexDirection="column" isScrollContainer>
-								<NodePreviewWithLinkSelector
+								<FxNodePreviewWithLinkSelector
 									documentId={selectedNode.documentId}
 									onSelectedNodeChange={this.handlePreviewItemClick}
 									selector={linkableElementsQuery}
