@@ -1,5 +1,5 @@
 {
-	"open-project-browser": {
+	"open-project-browser-modal": {
 		"__documentation": {
 			"summary": "Opens the project browser.",
 			"fontosdk": true,
