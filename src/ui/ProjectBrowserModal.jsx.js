@@ -65,6 +65,26 @@ class ProjectBrowserModal extends Component {
 		selectedNode: null
 	};
 
+	handleSubmit = selectedNode =>
+		this.props.submitModal({
+			nodeId: selectedNode.nodeId,
+			documentId: selectedNode.documentId
+		});
+
+	handleKeyDown = event => {
+		const { selectedNode } = this.state;
+		switch (event.key) {
+			case 'Escape':
+				this.props.cancelModal();
+				break;
+			case 'Enter':
+				if (selectedNode && selectedNode.nodeId) {
+					this.handleSubmit(selectedNode);
+				}
+				break;
+		}
+	};
+
 	handleHierarchyListItemClick = hierarchyNode => {
 		const selectedHierarchyNodes = [];
 		const rootNode = documentsManager.getNodeById(hierarchyNode.contextNodeId);
@@ -108,13 +128,7 @@ class ProjectBrowserModal extends Component {
 			selectedNode: { ...prevSelectedNode, nodeId: nodeId }
 		}));
 
-	handleSubmitButtonClick = () => {
-		const { selectedNode } = this.state;
-		this.props.submitModal({
-			nodeId: selectedNode.nodeId,
-			documentId: selectedNode.documentId
-		});
-	};
+	handleSubmitButtonClick = () => this.handleSubmit(this.state.selectedNode);
 
 	render() {
 		const { selectedAncestors, selectedNode } = this.state;
@@ -124,7 +138,7 @@ class ProjectBrowserModal extends Component {
 		} = this.props;
 
 		return (
-			<Modal size="m">
+			<Modal size="m" onKeyDown={this.handleKeyDown}>
 				<ModalHeader title={modalTitle} />
 
 				<ModalBody>
