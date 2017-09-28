@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Block, Flex, Icon, Label } from 'fontoxml-vendor-fds/components';
-
+import { Block, Flex, Icon, Label } from 'fds/components';
 import {
 	applyCss,
 	border,
@@ -11,7 +10,7 @@ import {
 	paddingLeft,
 	paddingRight,
 	spaceHorizontal
-} from 'fontoxml-vendor-fds/system';
+} from 'fds/system';
 
 const NON_BREAKING_SPACE = '\u00a0';
 

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { Flex } from 'fontoxml-vendor-fds/components';
+import { Flex } from 'fds/components';
 
 import ProjectHierarchyListNode from './ProjectHierarchyListNode.jsx';
 

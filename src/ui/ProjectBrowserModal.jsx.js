@@ -1,13 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 
-import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
-import documentsManager from 'fontoxml-documents/documentsManager';
-import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
-import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
-import structureViewManager from 'fontoxml-structure-view/structureViewManager';
-import t from 'fontoxml-localization/t';
-
 import {
 	Button,
 	Modal,
@@ -16,7 +9,13 @@ import {
 	ModalFooter,
 	ModalHeader,
 	StateMessage
-} from 'fontoxml-vendor-fds/components';
+} from 'fds/components';
+import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
+import documentsManager from 'fontoxml-documents/documentsManager';
+import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
+import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
+import structureViewManager from 'fontoxml-structure-view/structureViewManager';
+import t from 'fontoxml-localization/t';
 
 import ProjectHierarchyList from './ProjectHierarchyList.jsx';
 
