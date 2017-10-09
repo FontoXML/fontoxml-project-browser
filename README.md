@@ -18,6 +18,6 @@ This browser can be used by adding the following operation step to your operatio
 
 The elements which should be selectable by the user can be set by providing a `linkableElementsQuery`. This is an {@link XPathQuery}.
 
-When this modal is used to edit an existing link, the `documentId` and `nodeId` properties can be used to set the selection on the original document and element. In addition to these two properties, the modal title and primary button label can be set with the `modalTitle` and `modalPrimaryButtonLabel` respectively.
+When this modal is used to edit an existing link, the `documentId` and `nodeId` properties can be used to set the selection on the original document and element. In addition to these two properties, the modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
 
 For more information, see {@link operation/open-project-browser-modal}.

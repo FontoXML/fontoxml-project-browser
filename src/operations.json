@@ -13,6 +13,11 @@
 					]
 				},
 				{
+					"name": "modalIcon",
+					"type": "string",
+					"description": "(Optional) The icon being shown at the top of the modal. The value should be a valid font-awsome icon name."
+				},
+				{
 					"name": "modalPrimaryButtonLabel",
 					"type": "string",
 					"description": "(Optional) The label for the primary button. Defaults to `t__Insert`."

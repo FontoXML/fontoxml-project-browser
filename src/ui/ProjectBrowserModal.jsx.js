@@ -50,6 +50,7 @@ class ProjectBrowserModal extends Component {
 		data: PropTypes.shape({
 			documentId: PropTypes.string,
 			linkableElementsQuery: PropTypes.string.isRequired,
+			modalIcon: PropTypes.string,
 			modalPrimaryButtonLabel: PropTypes.string.isRequired,
 			modalTitle: PropTypes.string.isRequired,
 			nodeId: PropTypes.string
@@ -133,12 +134,12 @@ class ProjectBrowserModal extends Component {
 		const { selectedAncestors, selectedNode } = this.state;
 		const {
 			cancelModal,
-			data: { linkableElementsQuery, modalPrimaryButtonLabel, modalTitle }
+			data: { linkableElementsQuery, modalIcon, modalPrimaryButtonLabel, modalTitle }
 		} = this.props;
 
 		return (
 			<Modal size="m" onKeyDown={this.handleKeyDown}>
-				<ModalHeader title={modalTitle} />
+				<ModalHeader icon={modalIcon} title={modalTitle} />
 
 				<ModalBody>
 					<ModalContent>
