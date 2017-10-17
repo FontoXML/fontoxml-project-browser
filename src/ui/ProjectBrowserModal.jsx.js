@@ -14,6 +14,7 @@ import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
 import documentsManager from 'fontoxml-documents/documentsManager';
 import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
+import operationsManager from 'fontoxml-operations/operationsManager';
 import structureViewManager from 'fontoxml-structure-view/structureViewManager';
 import t from 'fontoxml-localization/t';
 
@@ -49,6 +50,7 @@ class ProjectBrowserModal extends Component {
 		cancelModal: PropTypes.func.isRequired,
 		data: PropTypes.shape({
 			documentId: PropTypes.string,
+			insertOperationName: PropTypes.string,
 			linkableElementsQuery: PropTypes.string.isRequired,
 			modalIcon: PropTypes.string,
 			modalPrimaryButtonLabel: PropTypes.string.isRequired,
@@ -59,8 +61,10 @@ class ProjectBrowserModal extends Component {
 	};
 
 	hierarchyNodes = structureViewManager.getStructureViewForest();
+	isMountedInDOM = false;
 
 	state = {
+		isSubmitButtonDisabled: true,
 		selectedAncestors: [],
 		selectedNode: null
 	};
@@ -72,16 +76,42 @@ class ProjectBrowserModal extends Component {
 		});
 
 	handleKeyDown = event => {
-		const { selectedNode } = this.state;
 		switch (event.key) {
 			case 'Escape':
 				this.props.cancelModal();
 				break;
 			case 'Enter':
-				if (selectedNode && selectedNode.nodeId) {
-					this.handleSubmit(selectedNode);
+				if (!this.state.isSubmitButtonDisabled) {
+					this.handleSubmit(this.state.selectedNode);
 				}
 				break;
+		}
+	};
+
+	determineSubmitButtonState = newState => {
+		const { insertOperationName } = this.props.data;
+		const canSubmitSelectedNode = newState.selectedNode && newState.selectedNode.nodeId;
+
+		newState.isSubmitButtonDisabled =
+			(canSubmitSelectedNode && !!insertOperationName) || !canSubmitSelectedNode;
+
+		this.setState(newState);
+
+		if (canSubmitSelectedNode && insertOperationName) {
+			const initialData = {
+				...this.props.data,
+				nodeId: newState.selectedNode.nodeId,
+				documentId: newState.selectedNode.documentId
+			};
+
+			operationsManager
+				.getOperationState(insertOperationName, initialData)
+				.then(
+					operationState =>
+						this.isMountedInDOM &&
+						this.setState({ isSubmitButtonDisabled: !operationState.enabled })
+				)
+				.catch(_ => this.isMountedInDOM && this.setState({ isSubmitButtonDisabled: true }));
 		}
 	};
 
@@ -120,18 +150,18 @@ class ProjectBrowserModal extends Component {
 			};
 		}
 
-		this.setState(newState);
+		this.determineSubmitButtonState(newState);
 	};
 
 	handlePreviewItemClick = nodeId =>
-		this.setState(({ selectedNode: prevSelectedNode }) => ({
-			selectedNode: { ...prevSelectedNode, nodeId: nodeId }
-		}));
+		this.determineSubmitButtonState({
+			selectedNode: { ...this.state.selectedNode, nodeId: nodeId }
+		});
 
 	handleSubmitButtonClick = () => this.handleSubmit(this.state.selectedNode);
 
 	render() {
-		const { selectedAncestors, selectedNode } = this.state;
+		const { isSubmitButtonDisabled, selectedAncestors, selectedNode } = this.state;
 		const {
 			cancelModal,
 			data: { linkableElementsQuery, modalIcon, modalPrimaryButtonLabel, modalTitle }
@@ -183,7 +213,7 @@ class ProjectBrowserModal extends Component {
 					<Button
 						type="primary"
 						label={modalPrimaryButtonLabel}
-						isDisabled={!selectedNode || !selectedNode.nodeId}
+						isDisabled={isSubmitButtonDisabled}
 						onClick={this.handleSubmitButtonClick}
 					/>
 				</ModalFooter>
@@ -193,6 +223,8 @@ class ProjectBrowserModal extends Component {
 
 	componentDidMount() {
 		const { documentId, nodeId } = this.props.data;
+
+		this.isMountedInDOM = true;
 
 		if (nodeId) {
 			const selectedHierarchyNodes = [];
@@ -206,7 +238,7 @@ class ProjectBrowserModal extends Component {
 				return;
 			}
 
-			this.setState({
+			this.determineSubmitButtonState({
 				selectedAncestors: selectedHierarchyNodes,
 				selectedNode: {
 					documentId: documentId || documentsManager.getDocumentIdByNodeId(nodeId),
@@ -215,6 +247,10 @@ class ProjectBrowserModal extends Component {
 				}
 			});
 		}
+	}
+
+	componentWillUnmount() {
+		this.isMountedInDOM = false;
 	}
 }
 
