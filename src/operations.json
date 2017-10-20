@@ -3,6 +3,7 @@
 		"__documentation": {
 			"summary": "Opens the project browser.",
 			"fontosdk": true,
+			"category": "add-on/fontoxml-project-browser",
 			"params": [
 				{
 					"name": "linkableElementsQuery",
