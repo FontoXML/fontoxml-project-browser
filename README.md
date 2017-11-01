@@ -1,6 +1,8 @@
+---
 category: add-on/fontoxml-project-browser
+---
 
-# Add-on project browser (fontoxml-project-browser)
+# Project browser library
 
 This add-on exposes the {@link operation/open-project-browser-modal} operation for opening a project browser. This browser allows the user to browse the documents currently opened in the editor and select one of the elements present in one of those documents. This, for example, can be used while selecting a target for a link.
 
