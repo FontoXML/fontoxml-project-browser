@@ -32,7 +32,7 @@ const determineStyles = (node, isDescendantSelected, isSelected) => {
 	const styles = [
 		{ alignItems: 'center' },
 		!node.isPlaceholder && { cursor: 'pointer' },
-		flex('horizontal'),
+		flex('row'),
 		{ paddingBottom: '.375rem', paddingTop: '.375rem' },
 		paddingLeft('s'),
 		paddingRight('s'),
