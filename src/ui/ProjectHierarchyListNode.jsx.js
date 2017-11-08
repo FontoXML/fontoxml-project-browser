@@ -11,8 +11,7 @@ import {
 	paddingRight,
 	spaceHorizontal
 } from 'fds/system';
-
-const NON_BREAKING_SPACE = '\u00a0';
+import t from 'fontoxml-localization/t';
 
 const determineStylesByColorName = (basicStyles, colorName) =>
 	applyCss([
@@ -82,7 +81,13 @@ class ProjectHierarchyListNode extends PureComponent {
 				>
 					<Icon icon={node.icon} />
 
-					<Label flex="1">{node.title || NON_BREAKING_SPACE}</Label>
+					{node.title ? (
+						<Label flex="1">{node.title}</Label>
+					) : (
+						<Label flex="1" colorName="text-muted-color">
+							{t('Untitled {MARKUPLABEL}', { MARKUPLABEL: node.markupLabel })}
+						</Label>
+					)}
 				</Flex>
 
 				{node.children.length > 0 && (
