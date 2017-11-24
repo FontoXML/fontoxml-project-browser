@@ -40,18 +40,21 @@ const determineStyles = (node, isDescendantSelected, isSelected) => {
 	];
 
 	if (isSelected) {
-		return determineStylesByColorName(styles, 'structure-view-item-active-document');
+		return determineStylesByColorName(styles, 'structure-view-node-item-active-document');
 	}
 
 	if (isDescendantSelected) {
-		return determineStylesByColorName(styles, 'structure-view-item-parent-of-active-document');
+		return determineStylesByColorName(
+			styles,
+			'structure-view-node-item-parent-of-active-document'
+		);
 	}
 
-	return determineStylesByColorName(styles, 'structure-view-item');
+	return determineStylesByColorName(styles, 'structure-view-node-item');
 };
 
 const childrenContainerStyles = [
-	borderLeft('#b3b3b3', '1px', 'dotted'),
+	borderLeft(color('structure-view-node-children-border'), '1px', 'solid'),
 	{ marginLeft: 'calc(1rem - 2px)' },
 	paddingLeft('l')
 ];
