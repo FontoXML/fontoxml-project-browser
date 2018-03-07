@@ -77,7 +77,7 @@ class ProjectHierarchyListNode extends PureComponent {
 		);
 
 		return (
-			<Block>
+			<Block flex="none">
 				<Flex
 					{...determineStyles(node, isDescendantSelected, isSelected)}
 					onClick={this.handleItemClick}
