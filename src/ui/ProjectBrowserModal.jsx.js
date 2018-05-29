@@ -11,40 +11,13 @@ import {
 	StateMessage
 } from 'fds/components';
 import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
+import documentsHierarchy from 'fontoxml-documents/documentsHierarchy';
 import documentsManager from 'fontoxml-documents/documentsManager';
 import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
-import operationsManager from 'fontoxml-operations/operationsManager';
-import structureViewManager from 'fontoxml-structure-view/structureViewManager';
+import FxOperation from 'fontoxml-fx/FxOperation.jsx';
 import StructureView from 'fontoxml-structure-view/StructureView.jsx';
 import t from 'fontoxml-localization/t';
-
-import ProjectHierarchyList from './ProjectHierarchyList.jsx';
-
-function determineSelectedHierarchyNode(hierarchyNode, selectedAncestors, nodeToSearchFor) {
-	let isSelected = false;
-	for (const childHierarchyNode of hierarchyNode.children) {
-		if (
-			determineSelectedHierarchyNode(childHierarchyNode, selectedAncestors, nodeToSearchFor)
-		) {
-			isSelected = true;
-		}
-	}
-	if (isSelected) {
-		// We are indirectly selected, no need to search here
-		selectedAncestors.push(hierarchyNode.contextNodeId);
-		return true;
-	}
-
-	// See if the focus lies here
-	const contextNodeId = hierarchyNode.contextNodeId;
-	const hierarchyDomNode = contextNodeId && documentsManager.getNodeById(contextNodeId);
-	isSelected = !!hierarchyDomNode && hierarchyDomNode.contains(nodeToSearchFor);
-	if (isSelected) {
-		selectedAncestors.push(hierarchyNode.contextNodeId);
-	}
-	return isSelected;
-}
 
 class ProjectBrowserModal extends Component {
 	static propTypes = {
@@ -61,197 +34,208 @@ class ProjectBrowserModal extends Component {
 		submitModal: PropTypes.func.isRequired
 	};
 
-	hierarchyNodes = structureViewManager.getStructureViewForest();
-	isMountedInDOM = false;
-
 	state = {
-		isSubmitButtonDisabled: true,
-		selectedAncestors: [],
-		selectedNode: null
+		selectedHierarchyNode: null,
+		selectedNodeId: null,
+
+		// Derived from the above by select
+		insertOperationInitialData: {}
 	};
 
-	handleSubmit = selectedNode =>
+	handleSubmitButtonClick = () => {
 		this.props.submitModal({
-			nodeId: selectedNode.nodeId,
-			documentId: selectedNode.documentId
+			nodeId: this.state.selectedNodeId,
+			documentId: this.state.selectedHierarchyNode.documentReference.documentId
 		});
+	};
 
-	handleKeyDown = event => {
+	handleKeyDownCancelOrSubmit = event => {
 		switch (event.key) {
 			case 'Escape':
 				this.props.cancelModal();
 				break;
 			case 'Enter':
-				if (!this.state.isSubmitButtonDisabled) {
-					this.handleSubmit(this.state.selectedNode);
-				}
+				this.handleSubmitButtonClick();
 				break;
 		}
 	};
 
-	determineSubmitButtonState = newState => {
-		const { insertOperationName } = this.props.data;
-		const canSubmitSelectedNode = newState.selectedNode && newState.selectedNode.nodeId;
-
-		newState.isSubmitButtonDisabled =
-			(canSubmitSelectedNode && !!insertOperationName) || !canSubmitSelectedNode;
-
-		this.setState(newState);
-
-		if (canSubmitSelectedNode && insertOperationName) {
-			const initialData = {
-				...this.props.data,
-				nodeId: newState.selectedNode.nodeId,
-				documentId: newState.selectedNode.documentId
-			};
-
-			operationsManager
-				.getOperationState(insertOperationName, initialData)
-				.then(
-					operationState =>
-						this.isMountedInDOM &&
-						this.setState({ isSubmitButtonDisabled: !operationState.enabled })
-				)
-				.catch(_ => this.isMountedInDOM && this.setState({ isSubmitButtonDisabled: true }));
+	handleKeyDownCancelOnly = event => {
+		switch (event.key) {
+			case 'Escape':
+				this.props.cancelModal();
+				break;
 		}
 	};
 
-	handleHierarchyListItemClick = hierarchyNode => {
-		const selectedHierarchyNodes = [];
-		const rootNode = documentsManager.getNodeById(hierarchyNode.contextNodeId);
-
-		this.hierarchyNodes.find(hierarchyNode =>
-			determineSelectedHierarchyNode(hierarchyNode, selectedHierarchyNodes, rootNode)
-		);
-
-		if (selectedHierarchyNodes.length === 0) {
+	select(selectedHierarchyNode, selectedNodeId) {
+		if (
+			selectedHierarchyNode === this.state.selectedHierarchyNode &&
+			selectedNodeId === this.state.selectedNodeId
+		) {
 			return;
 		}
-
-		const newState = {
-			selectedAncestors: selectedHierarchyNodes,
-			selectedNode: {
-				documentId: documentsManager.getDocumentIdByNodeId(hierarchyNode.contextNodeId),
-				rootNodeId: hierarchyNode.contextNodeId
+		this.setState({
+			selectedHierarchyNode,
+			selectedNodeId,
+			insertOperationInitialData: {
+				...this.props.data,
+				nodeId: selectedNodeId,
+				documentId:
+					selectedHierarchyNode && selectedHierarchyNode.documentReference.documentId
 			}
-		};
+		});
+	}
 
-		if (
-			evaluateXPathToBoolean(
-				'let $selectableNodes := ' +
-					this.props.data.linkableElementsQuery +
-					' return some $node in $selectableNodes satisfies . is $node',
-				rootNode,
-				readOnlyBlueprint
-			)
-		) {
-			newState.selectedNode = {
-				...newState.selectedNode,
-				nodeId: hierarchyNode.contextNodeId
-			};
-		}
+	isSelectableNode(nodeId) {
+		return evaluateXPathToBoolean(
+			'let $selectableNodes := ' +
+				this.props.data.linkableElementsQuery +
+				' return some $node in $selectableNodes satisfies . is $node',
+			documentsManager.getNodeById(nodeId),
+			readOnlyBlueprint
+		);
+	}
 
-		this.determineSubmitButtonState(newState);
+	handleStructureViewItemClick = item => {
+		const hierarchyNode = documentsHierarchy.find(
+			node => node.getId() === item.hierarchyNodeId
+		);
+		this.select(
+			hierarchyNode,
+			this.isSelectableNode(item.contextNodeId) ? item.contextNodeId : null
+		);
 	};
 
-	handlePreviewItemClick = nodeId =>
-		this.determineSubmitButtonState({
-			selectedNode: { ...this.state.selectedNode, nodeId: nodeId }
-		});
-
-	handleSubmitButtonClick = () => this.handleSubmit(this.state.selectedNode);
+	handlePreviewItemClick = nodeId => {
+		this.select(this.state.selectedHierarchyNode, nodeId);
+	};
 
 	render() {
-		const { isSubmitButtonDisabled, selectedAncestors, selectedNode } = this.state;
 		const {
 			cancelModal,
-			data: { linkableElementsQuery, modalIcon, modalPrimaryButtonLabel, modalTitle }
+			data: {
+				insertOperationName,
+				linkableElementsQuery,
+				modalIcon,
+				modalPrimaryButtonLabel,
+				modalTitle
+			}
 		} = this.props;
 
+		const hasCompleteSelection = !!this.state.selectedNodeId;
+
+		// Wrap the entire modal in an FxOperation so we can handle keydown based on the resulting state
 		return (
-			<Modal size="m" onKeyDown={this.handleKeyDown}>
-				<ModalHeader icon={modalIcon} title={modalTitle} />
+			<FxOperation
+				operationName={(hasCompleteSelection && insertOperationName) || 'do-nothing'}
+				initialData={this.state.insertOperationInitialData}
+			>
+				{({ operationState }) => {
+					const canSubmit = hasCompleteSelection && operationState.enabled;
 
-				<ModalBody>
-					<ModalContent>
-						<ModalContent flexDirection="column" isScrollContainer paddingSize="m">
-							<ProjectHierarchyList
-								rootNodes={this.hierarchyNodes}
-								onItemClick={this.handleHierarchyListItemClick}
-								selectedAncestors={selectedAncestors}
-								selectedNode={selectedNode}
-							/>
-						</ModalContent>
+					return (
+						<Modal
+							size="m"
+							onKeyDown={
+								canSubmit ? (
+									this.handleKeyDownCancelOrSubmit
+								) : (
+									this.handleKeyDownCancelOnly
+								)
+							}
+						>
+							<ModalHeader icon={modalIcon} title={modalTitle} />
 
-						{!selectedNode && (
-							<ModalContent flexDirection="column">
-								<StateMessage
-									message={t('Select an item in the list to the left.')}
-									paddingSize="m"
-									title={t('No item selected')}
-									visual="hand-pointer-o"
+							<ModalBody>
+								<ModalContent>
+									<ModalContent flexDirection="column" isScrollContainer>
+										<StructureView
+											onItemClick={this.handleStructureViewItemClick}
+											selectedContextNodeId={this.state.selectedNodeId}
+											selectedHierarchyNodeId={
+												this.state.selectedHierarchyNode &&
+												this.state.selectedHierarchyNode.getId()
+											}
+										/>
+									</ModalContent>
+
+									{!this.state.selectedHierarchyNode ? (
+										<ModalContent flexDirection="column">
+											<StateMessage
+												message={t(
+													'Select an item in the list to the left.'
+												)}
+												paddingSize="m"
+												title={t('No item selected')}
+												visual="hand-pointer-o"
+											/>
+										</ModalContent>
+									) : (
+										<ModalContent
+											flex="2"
+											flexDirection="column"
+											isScrollContainer
+										>
+											<FxNodePreviewWithLinkSelector
+												documentId={
+													this.state.selectedHierarchyNode
+														.documentReference.documentId
+												}
+												onSelectedNodeChange={this.handlePreviewItemClick}
+												selector={linkableElementsQuery}
+												selectedNodeId={this.state.selectedNodeId}
+												traversalRootNodeId={
+													this.state.selectedHierarchyNode
+														.documentReference.traversalRootNodeId
+												}
+											/>
+										</ModalContent>
+									)}
+								</ModalContent>
+							</ModalBody>
+
+							<ModalFooter>
+								<Button label={t('Cancel')} onClick={cancelModal} />
+
+								<Button
+									type="primary"
+									label={modalPrimaryButtonLabel}
+									isDisabled={!canSubmit}
+									onClick={this.handleSubmitButtonClick}
 								/>
-							</ModalContent>
-						)}
-
-						{selectedNode && (
-							<ModalContent flex="2" flexDirection="column" isScrollContainer>
-								<FxNodePreviewWithLinkSelector
-									documentId={selectedNode.documentId}
-									onSelectedNodeChange={this.handlePreviewItemClick}
-									selector={linkableElementsQuery}
-									selectedNodeId={selectedNode.nodeId}
-									traversalRootNodeId={selectedNode.rootNodeId}
-								/>
-							</ModalContent>
-						)}
-					</ModalContent>
-				</ModalBody>
-
-				<ModalFooter>
-					<Button label={t('Cancel')} onClick={cancelModal} />
-
-					<Button
-						type="primary"
-						label={modalPrimaryButtonLabel}
-						isDisabled={isSubmitButtonDisabled}
-						onClick={this.handleSubmitButtonClick}
-					/>
-				</ModalFooter>
-			</Modal>
+							</ModalFooter>
+						</Modal>
+					);
+				}}
+			</FxOperation>
 		);
 	}
 
 	componentDidMount() {
-		const { documentId, nodeId } = this.props.data;
-
-		this.isMountedInDOM = true;
-
-		if (nodeId) {
-			const selectedHierarchyNodes = [];
+		// Determine initial selection based on the given nodeId
+		const { nodeId } = this.props.data;
+		if (nodeId && this.isSelectableNode(nodeId)) {
 			const selectedNode = documentsManager.getNodeById(nodeId);
+			const closest = documentsHierarchy
+				.findAll(node => {
+					// Ignore hierarchy nodes without a loaded document
+					if (!node.documentReference || !node.documentReference.documentId) {
+						return false;
+					}
 
-			this.hierarchyNodes.find(hierarchyNode =>
-				determineSelectedHierarchyNode(hierarchyNode, selectedHierarchyNodes, selectedNode)
-			);
-
-			if (selectedHierarchyNodes.length === 0) {
-				return;
+					return node.documentReference.getTraversalRootNode().contains(selectedNode);
+				})
+				.map(node => ({ node, root: node.documentReference.getTraversalRootNode() }))
+				.reduce(
+					(closest, node) =>
+						!closest || closest.root.contains(node.root) ? node : closest,
+					null
+				);
+			if (closest) {
+				this.select(closest.node, nodeId);
 			}
-
-			this.determineSubmitButtonState({
-				selectedAncestors: selectedHierarchyNodes,
-				selectedNode: {
-					documentId: documentId || documentsManager.getDocumentIdByNodeId(nodeId),
-					rootNodeId: selectedHierarchyNodes[0],
-					nodeId: nodeId
-				}
-			});
 		}
-	}
-
-	componentWillUnmount() {
-		this.isMountedInDOM = false;
 	}
 }
 
