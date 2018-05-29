@@ -16,6 +16,7 @@ import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
 import operationsManager from 'fontoxml-operations/operationsManager';
 import structureViewManager from 'fontoxml-structure-view/structureViewManager';
+import StructureView from 'fontoxml-structure-view/StructureView.jsx';
 import t from 'fontoxml-localization/t';
 
 import ProjectHierarchyList from './ProjectHierarchyList.jsx';
@@ -37,8 +38,8 @@ function determineSelectedHierarchyNode(hierarchyNode, selectedAncestors, nodeTo
 
 	// See if the focus lies here
 	const contextNodeId = hierarchyNode.contextNodeId;
-	const hierarchyDomNode = documentsManager.getNodeById(contextNodeId);
-	isSelected = hierarchyDomNode.contains(nodeToSearchFor);
+	const hierarchyDomNode = contextNodeId && documentsManager.getNodeById(contextNodeId);
+	isSelected = !!hierarchyDomNode && hierarchyDomNode.contains(nodeToSearchFor);
 	if (isSelected) {
 		selectedAncestors.push(hierarchyNode.contextNodeId);
 	}
