@@ -88,18 +88,21 @@ class ProjectBrowserModal extends Component {
 	}
 
 	isSelectableNode(nodeId) {
-		return evaluateXPathToBoolean(
-			'let $selectableNodes := ' +
-				this.props.data.linkableElementsQuery +
-				' return some $node in $selectableNodes satisfies . is $node',
-			documentsManager.getNodeById(nodeId),
-			readOnlyBlueprint
+		return (
+			!!nodeId &&
+			evaluateXPathToBoolean(
+				'let $selectableNodes := ' +
+					this.props.data.linkableElementsQuery +
+					' return some $node in $selectableNodes satisfies . is $node',
+				documentsManager.getNodeById(nodeId),
+				readOnlyBlueprint
+			)
 		);
 	}
 
 	handleStructureViewItemClick = item => {
 		const hierarchyNode = documentsHierarchy.find(
-			node => node.getId() === item.hierarchyNodeId
+			node => node.getId() === item.hierarchyNodeId && !!node.documentReference
 		);
 		this.select(
 			hierarchyNode,
@@ -133,6 +136,9 @@ class ProjectBrowserModal extends Component {
 			>
 				{({ operationState }) => {
 					const canSubmit = hasCompleteSelection && operationState.enabled;
+					const selectedDocumentId = this.state.selectedHierarchyNode
+						? this.state.selectedHierarchyNode.documentReference.documentId
+						: null;
 
 					return (
 						<Modal
@@ -160,7 +166,7 @@ class ProjectBrowserModal extends Component {
 										/>
 									</ModalContent>
 
-									{!this.state.selectedHierarchyNode ? (
+									{!selectedDocumentId ? (
 										<ModalContent flexDirection="column">
 											<StateMessage
 												message={t(
@@ -178,10 +184,7 @@ class ProjectBrowserModal extends Component {
 											isScrollContainer
 										>
 											<FxNodePreviewWithLinkSelector
-												documentId={
-													this.state.selectedHierarchyNode
-														.documentReference.documentId
-												}
+												documentId={selectedDocumentId}
 												onSelectedNodeChange={this.handlePreviewItemClick}
 												selector={linkableElementsQuery}
 												selectedNodeId={this.state.selectedNodeId}
@@ -215,7 +218,7 @@ class ProjectBrowserModal extends Component {
 	componentDidMount() {
 		// Determine initial selection based on the given nodeId
 		const { nodeId } = this.props.data;
-		if (nodeId && this.isSelectableNode(nodeId)) {
+		if (this.isSelectableNode(nodeId)) {
 			const selectedNode = documentsManager.getNodeById(nodeId);
 			const closest = documentsHierarchy
 				.findAll(node => {
