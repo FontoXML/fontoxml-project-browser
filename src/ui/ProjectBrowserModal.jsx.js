@@ -167,7 +167,9 @@ class ProjectBrowserModal extends Component {
 									<ModalContent flexDirection="column" isScrollContainer>
 										<StructureView
 											onItemClick={this.handleStructureViewItemClick}
-											selectedContextNodeId={this.state.selectedNodeId}
+											selectedContextNodeId={
+												this.state.currentTraversalRootNodeId
+											}
 											selectedHierarchyNodeId={
 												this.state.currentHierarchyNode &&
 												this.state.currentHierarchyNode.getId()
@@ -188,6 +190,10 @@ class ProjectBrowserModal extends Component {
 										</ModalContent>
 									) : (
 										<ModalContent
+											key={
+												selectedDocumentId +
+												this.state.currentTraversalRootNodeId
+											}
 											flex="2"
 											flexDirection="column"
 											isScrollContainer
