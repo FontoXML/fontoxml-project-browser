@@ -16,6 +16,7 @@ import documentsManager from 'fontoxml-documents/documentsManager';
 import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
 import FxOperation from 'fontoxml-fx/FxOperation.jsx';
+import getClosestStructureViewItem from 'fontoxml-structure-view/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure-view/StructureView.jsx';
 import t from 'fontoxml-localization/t';
 
@@ -35,7 +36,11 @@ class ProjectBrowserModal extends Component {
 	};
 
 	state = {
-		selectedHierarchyNode: null,
+		// Selected hierarchy node and node ID from the structure view
+		currentHierarchyNode: null,
+		currentTraversalRootNodeId: null,
+
+		// Selected node ID from the preview
 		selectedNodeId: null,
 
 		// Derived from the above by select
@@ -45,7 +50,7 @@ class ProjectBrowserModal extends Component {
 	handleSubmitButtonClick = () => {
 		this.props.submitModal({
 			nodeId: this.state.selectedNodeId,
-			documentId: this.state.selectedHierarchyNode.documentReference.documentId
+			documentId: this.state.currentHierarchyNode.documentReference.documentId
 		});
 	};
 
@@ -68,21 +73,23 @@ class ProjectBrowserModal extends Component {
 		}
 	};
 
-	select(selectedHierarchyNode, selectedNodeId) {
+	select(currentHierarchyNode, currentTraversalRootNodeId, selectedNodeId) {
 		if (
-			selectedHierarchyNode === this.state.selectedHierarchyNode &&
+			currentHierarchyNode === this.state.currentHierarchyNode &&
+			currentTraversalRootNodeId === this.state.currentTraversalRootNodeId &&
 			selectedNodeId === this.state.selectedNodeId
 		) {
 			return;
 		}
 		this.setState({
-			selectedHierarchyNode,
+			currentHierarchyNode,
+			currentTraversalRootNodeId,
 			selectedNodeId,
 			insertOperationInitialData: {
 				...this.props.data,
 				nodeId: selectedNodeId,
 				documentId:
-					selectedHierarchyNode && selectedHierarchyNode.documentReference.documentId
+					currentHierarchyNode && currentHierarchyNode.documentReference.documentId
 			}
 		});
 	}
@@ -106,12 +113,13 @@ class ProjectBrowserModal extends Component {
 		);
 		this.select(
 			hierarchyNode,
+			item.contextNodeId,
 			this.isSelectableNode(item.contextNodeId) ? item.contextNodeId : null
 		);
 	};
 
 	handlePreviewItemClick = nodeId => {
-		this.select(this.state.selectedHierarchyNode, nodeId);
+		this.select(this.state.currentHierarchyNode, this.state.currentTraversalRootNodeId, nodeId);
 	};
 
 	render() {
@@ -136,8 +144,8 @@ class ProjectBrowserModal extends Component {
 			>
 				{({ operationState }) => {
 					const canSubmit = hasCompleteSelection && operationState.enabled;
-					const selectedDocumentId = this.state.selectedHierarchyNode
-						? this.state.selectedHierarchyNode.documentReference.documentId
+					const selectedDocumentId = this.state.currentHierarchyNode
+						? this.state.currentHierarchyNode.documentReference.documentId
 						: null;
 
 					return (
@@ -161,8 +169,8 @@ class ProjectBrowserModal extends Component {
 											onItemClick={this.handleStructureViewItemClick}
 											selectedContextNodeId={this.state.selectedNodeId}
 											selectedHierarchyNodeId={
-												this.state.selectedHierarchyNode &&
-												this.state.selectedHierarchyNode.getId()
+												this.state.currentHierarchyNode &&
+												this.state.currentHierarchyNode.getId()
 											}
 										/>
 									</ModalContent>
@@ -190,8 +198,7 @@ class ProjectBrowserModal extends Component {
 												selector={linkableElementsQuery}
 												selectedNodeId={this.state.selectedNodeId}
 												traversalRootNodeId={
-													this.state.selectedHierarchyNode
-														.documentReference.traversalRootNodeId
+													this.state.currentTraversalRootNodeId
 												}
 											/>
 										</ModalContent>
@@ -219,27 +226,24 @@ class ProjectBrowserModal extends Component {
 	componentDidMount() {
 		// Determine initial selection based on the given nodeId
 		const { nodeId } = this.props.data;
-		if (this.isSelectableNode(nodeId)) {
-			const selectedNode = documentsManager.getNodeById(nodeId);
-			const closest = documentsHierarchy
-				.findAll(node => {
-					// Ignore hierarchy nodes without a loaded document
-					if (!node.documentReference || !node.documentReference.documentId) {
-						return false;
-					}
-
-					return node.documentReference.getTraversalRootNode().contains(selectedNode);
-				})
-				.map(node => ({ node, root: node.documentReference.getTraversalRootNode() }))
-				.reduce(
-					(closest, node) =>
-						!closest || closest.root.contains(node.root) ? node : closest,
-					null
-				);
-			if (closest) {
-				this.select(closest.node, nodeId);
-			}
+		if (!nodeId) {
+			return;
 		}
+
+		const closestItem = getClosestStructureViewItem(nodeId);
+		if (!closestItem) {
+			return;
+		}
+
+		var hierarchyNode = documentsHierarchy.find(node => {
+			return node.getId() === closestItem.hierarchyNodeId;
+		});
+
+		this.select(
+			hierarchyNode,
+			closestItem.contextNodeId,
+			this.isSelectableNode(nodeId) ? nodeId : null
+		);
 	}
 }
 
