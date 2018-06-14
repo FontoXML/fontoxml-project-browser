@@ -20,6 +20,19 @@ import getClosestStructureViewItem from 'fontoxml-structure-view/getClosestStruc
 import StructureView from 'fontoxml-structure-view/StructureView.jsx';
 import t from 'fontoxml-localization/t';
 
+function isSelectableNode(linkableElementsQuery, nodeId) {
+	return (
+		!!nodeId &&
+		evaluateXPathToBoolean(
+			'let $selectableNodes := ' +
+				linkableElementsQuery +
+				' return some $node in $selectableNodes satisfies . is $node',
+			documentsManager.getNodeById(nodeId),
+			readOnlyBlueprint
+		)
+	);
+}
+
 class ProjectBrowserModal extends Component {
 	static propTypes = {
 		cancelModal: PropTypes.func.isRequired,
@@ -73,48 +86,40 @@ class ProjectBrowserModal extends Component {
 		}
 	};
 
-	select(currentHierarchyNode, currentTraversalRootNodeId, selectedNodeId) {
-		if (
-			currentHierarchyNode === this.state.currentHierarchyNode &&
-			currentTraversalRootNodeId === this.state.currentTraversalRootNodeId &&
-			selectedNodeId === this.state.selectedNodeId
-		) {
-			return;
-		}
-		this.setState({
-			currentHierarchyNode,
-			currentTraversalRootNodeId,
-			selectedNodeId,
-			insertOperationInitialData: {
-				...this.props.data,
-				nodeId: selectedNodeId,
-				documentId:
-					currentHierarchyNode && currentHierarchyNode.documentReference.documentId
+	select(hierarchyNode, traversalRootNodeId, nodeId) {
+		this.setState(({ currentHierarchyNode, currentTraversalRootNodeId, selectedNodeId }) => {
+			if (
+				hierarchyNode === currentHierarchyNode &&
+				traversalRootNodeId === currentTraversalRootNodeId &&
+				nodeId === selectedNodeId
+			) {
+				return null;
 			}
-		});
-	}
 
-	isSelectableNode(nodeId) {
-		return (
-			!!nodeId &&
-			evaluateXPathToBoolean(
-				'let $selectableNodes := ' +
-					this.props.data.linkableElementsQuery +
-					' return some $node in $selectableNodes satisfies . is $node',
-				documentsManager.getNodeById(nodeId),
-				readOnlyBlueprint
-			)
-		);
+			return {
+				currentHierarchyNode: hierarchyNode,
+				currentTraversalRootNodeId: traversalRootNodeId,
+				selectedNodeId: nodeId,
+				insertOperationInitialData: {
+					...this.props.data,
+					nodeId,
+					documentId: hierarchyNode && hierarchyNode.documentReference.documentId
+				}
+			};
+		});
 	}
 
 	handleStructureViewItemClick = item => {
 		const hierarchyNode = documentsHierarchy.find(
 			node => node.getId() === item.hierarchyNodeId && !!node.documentReference
 		);
+
 		this.select(
 			hierarchyNode,
 			item.contextNodeId,
-			this.isSelectableNode(item.contextNodeId) ? item.contextNodeId : null
+			isSelectableNode(this.props.data.linkableElementsQuery, item.contextNodeId)
+				? item.contextNodeId
+				: null
 		);
 	};
 
@@ -123,23 +128,14 @@ class ProjectBrowserModal extends Component {
 	};
 
 	render() {
-		const {
-			cancelModal,
-			data: {
-				insertOperationName,
-				linkableElementsQuery,
-				modalIcon,
-				modalPrimaryButtonLabel,
-				modalTitle
-			}
-		} = this.props;
-
 		const hasCompleteSelection = !!this.state.selectedNodeId;
+		const operationName =
+			(hasCompleteSelection && this.props.data.insertOperationName) || 'do-nothing';
 
 		// Wrap the entire modal in an FxOperation so we can handle keydown based on the resulting state
 		return (
 			<FxOperation
-				operationName={(hasCompleteSelection && insertOperationName) || 'do-nothing'}
+				operationName={operationName}
 				initialData={this.state.insertOperationInitialData}
 			>
 				{({ operationState }) => {
@@ -153,14 +149,15 @@ class ProjectBrowserModal extends Component {
 							isFullHeight
 							size="m"
 							onKeyDown={
-								canSubmit ? (
-									this.handleKeyDownCancelOrSubmit
-								) : (
-									this.handleKeyDownCancelOnly
-								)
+								canSubmit
+									? this.handleKeyDownCancelOrSubmit
+									: this.handleKeyDownCancelOnly
 							}
 						>
-							<ModalHeader icon={modalIcon} title={modalTitle} />
+							<ModalHeader
+								icon={this.props.data.modalIcon}
+								title={this.props.data.modalTitle}
+							/>
 
 							<ModalBody>
 								<ModalContent>
@@ -177,7 +174,7 @@ class ProjectBrowserModal extends Component {
 										/>
 									</ModalContent>
 
-									{!selectedDocumentId ? (
+									{!selectedDocumentId && (
 										<ModalContent flexDirection="column">
 											<StateMessage
 												message={t(
@@ -188,7 +185,8 @@ class ProjectBrowserModal extends Component {
 												visual="hand-pointer-o"
 											/>
 										</ModalContent>
-									) : (
+									)}
+									{selectedDocumentId && (
 										<ModalContent
 											key={
 												selectedDocumentId +
@@ -201,7 +199,7 @@ class ProjectBrowserModal extends Component {
 											<FxNodePreviewWithLinkSelector
 												documentId={selectedDocumentId}
 												onSelectedNodeChange={this.handlePreviewItemClick}
-												selector={linkableElementsQuery}
+												selector={this.props.data.linkableElementsQuery}
 												selectedNodeId={this.state.selectedNodeId}
 												traversalRootNodeId={
 													this.state.currentTraversalRootNodeId
@@ -213,11 +211,11 @@ class ProjectBrowserModal extends Component {
 							</ModalBody>
 
 							<ModalFooter>
-								<Button label={t('Cancel')} onClick={cancelModal} />
+								<Button label={t('Cancel')} onClick={this.props.cancelModal} />
 
 								<Button
 									type="primary"
-									label={modalPrimaryButtonLabel}
+									label={this.props.data.modalPrimaryButtonLabel}
 									isDisabled={!canSubmit}
 									onClick={this.handleSubmitButtonClick}
 								/>
@@ -248,7 +246,7 @@ class ProjectBrowserModal extends Component {
 		this.select(
 			hierarchyNode,
 			closestItem.contextNodeId,
-			this.isSelectableNode(nodeId) ? nodeId : null
+			isSelectableNode(this.props.data.linkableElementsQuery, nodeId) ? nodeId : null
 		);
 	}
 }
