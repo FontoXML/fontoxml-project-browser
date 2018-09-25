@@ -147,7 +147,7 @@ class ProjectBrowserModal extends Component {
 					return (
 						<Modal
 							isFullHeight
-							size="m"
+							size="l"
 							onKeyDown={
 								canSubmit
 									? this.handleKeyDownCancelOrSubmit
