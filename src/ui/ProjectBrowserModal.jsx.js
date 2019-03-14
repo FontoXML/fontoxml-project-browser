@@ -18,6 +18,7 @@ import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSele
 import FxOperation from 'fontoxml-fx/FxOperation.jsx';
 import getClosestStructureViewItem from 'fontoxml-structure-view/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure-view/StructureView.jsx';
+import initialDocumentsManager from 'fontoxml-remote-documents/initialDocumentsManager';
 import t from 'fontoxml-localization/t';
 
 function isSelectableNode(linkableElementsQuery, nodeId) {
@@ -113,6 +114,33 @@ class ProjectBrowserModal extends Component {
 		const hierarchyNode = documentsHierarchy.find(
 			node => node.getId() === item.hierarchyNodeId && !!node.documentReference
 		);
+
+		if (
+			hierarchyNode &&
+			(hierarchyNode.documentReference === null ||
+				!hierarchyNode.documentReference.isLoaded())
+		) {
+			// This hierarchy node has not been completely finished loading (yet)
+			// Make sure that it will
+			if (!initialDocumentsManager.canRetryLoadingDocumentForHierarchyNode()) {
+				throw new Error(
+					'The hierarchy can not contain unloaded documents for editor instances' +
+						' that do not allow loading a single document.' +
+						' Please implement the "retryLoadingDocumentForHierarchyNode" loading strategy.'
+				);
+			}
+			initialDocumentsManager.retryLoadingDocumentForHierarchyNode(hierarchyNode).then(() =>
+				// The hierarchy node should be updated now
+				this.select(
+					hierarchyNode,
+					item.contextNodeId,
+					isSelectableNode(this.props.data.linkableElementsQuery, item.contextNodeId)
+						? item.contextNodeId
+						: null
+				)
+			);
+			return;
+		}
 
 		this.select(
 			hierarchyNode,
