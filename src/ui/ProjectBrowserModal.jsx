@@ -10,16 +10,16 @@ import {
 	ModalHeader,
 	StateMessage
 } from 'fds/components';
-import readOnlyBlueprint from 'fontoxml-blueprints/readOnlyBlueprint';
-import documentsHierarchy from 'fontoxml-documents/documentsHierarchy';
-import documentsManager from 'fontoxml-documents/documentsManager';
-import evaluateXPathToBoolean from 'fontoxml-selectors/evaluateXPathToBoolean';
-import FxNodePreviewWithLinkSelector from 'fontoxml-fx/FxNodePreviewWithLinkSelector.jsx';
-import FxOperation from 'fontoxml-fx/FxOperation.jsx';
-import getClosestStructureViewItem from 'fontoxml-structure-view/getClosestStructureViewItem';
-import StructureView from 'fontoxml-structure-view/StructureView.jsx';
-import initialDocumentsManager from 'fontoxml-remote-documents/initialDocumentsManager';
-import t from 'fontoxml-localization/t';
+import readOnlyBlueprint from 'fontoxml-blueprints/src/readOnlyBlueprint.js';
+import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy.js';
+import documentsManager from 'fontoxml-documents/src/documentsManager.js';
+import evaluateXPathToBoolean from 'fontoxml-selectors/src/evaluateXPathToBoolean.js';
+import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector.jsx';
+import FxOperation from 'fontoxml-fx/src/FxOperation.jsx';
+import getClosestStructureViewItem from 'fontoxml-structure-view/src/getClosestStructureViewItem.js';
+import StructureView from 'fontoxml-structure-view/src/StructureView.jsx';
+import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
+import t from 'fontoxml-localization/src/t.js';
 
 function isSelectableNode(linkableElementsQuery, nodeId) {
 	return (

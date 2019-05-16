@@ -1,15 +1,6 @@
-define([
-	'fontoxml-modular-ui/uiManager',
+import uiManager from 'fontoxml-modular-ui/src/uiManager.js';
+import ProjectBrowserModal from './ui/ProjectBrowserModal.jsx';
 
-	'./ui/ProjectBrowserModal.jsx'
-], function (
-	uiManager,
-
-	ProjectBrowserModal
-) {
-	'use strict';
-
-	return function install () {
-		uiManager.registerReactComponent('ProjectBrowserModal', ProjectBrowserModal);
-	};
-});
+export default function install() {
+	uiManager.registerReactComponent('ProjectBrowserModal', ProjectBrowserModal);
+}
