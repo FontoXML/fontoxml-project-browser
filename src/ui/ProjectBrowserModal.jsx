@@ -164,7 +164,7 @@ class ProjectBrowserModal extends Component {
 		return (
 			<FxOperation
 				operationName={operationName}
-				initialData={this.state.insertOperationInitialData}
+				operationData={this.state.insertOperationInitialData}
 			>
 				{({ operationState }) => {
 					const canSubmit = hasCompleteSelection && operationState.enabled;
