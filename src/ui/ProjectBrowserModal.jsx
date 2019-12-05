@@ -189,7 +189,7 @@ class ProjectBrowserModal extends Component {
 
 							<ModalBody>
 								<ModalContent>
-									<ModalContent flexDirection="column" isScrollContainer>
+									<ModalContent flexDirection="column" flex="1" isScrollContainer>
 										<StructureView
 											onItemClick={this.handleStructureViewItemClick}
 											selectedContextNodeId={
@@ -203,7 +203,7 @@ class ProjectBrowserModal extends Component {
 									</ModalContent>
 
 									{!selectedDocumentId && (
-										<ModalContent flexDirection="column">
+										<ModalContent flexDirection="column" flex="2">
 											<StateMessage
 												message={t(
 													'Select an item in the list to the left.'
