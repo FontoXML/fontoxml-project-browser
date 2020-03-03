@@ -18,7 +18,7 @@ import t from 'fontoxml-localization/src/t.js';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
 import getClosestStructureViewItem from 'fontoxml-structure-view/src/getClosestStructureViewItem.js';
 import StructureView from 'fontoxml-structure-view/src/StructureView.jsx';
-import useOperationState from 'fontoxml-fx/src/useOperationState.js';
+import useOperation from 'fontoxml-fx/src/useOperation.js';
 
 function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(() =>
@@ -135,7 +135,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 
 	const operationName = (linkableElementId && data.insertOperationName) || 'do-nothing';
 
-	const operationState = useOperationState(operationName, insertOperationInitialData);
+	const { operationState } = useOperation(operationName, insertOperationInitialData);
 
 	const canSubmit = linkableElementId && operationState.enabled;
 	const selectedDocumentId = currentHierarchyNode
