@@ -16,8 +16,8 @@ import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLink
 import useXPath, { XPATH_RETURN_TYPES } from 'fontoxml-fx/src/useXPath.js';
 import t from 'fontoxml-localization/src/t.js';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
-import getClosestStructureViewItem from 'fontoxml-structure-view/src/getClosestStructureViewItem.js';
-import StructureView from 'fontoxml-structure-view/src/StructureView.jsx';
+import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
+import StructureView from 'fontoxml-structure/src/StructureView.jsx';
 import useOperation from 'fontoxml-fx/src/useOperation.js';
 
 function ProjectBrowserModal({ cancelModal, data, submitModal }) {
