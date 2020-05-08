@@ -55,10 +55,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 
 	const isElementLinkable = useXPath(
 		selectedStructureViewItem &&
+			selectedStructureViewItem.contextNodeId &&
 			'let $selectableNodes := ' +
 				data.linkableElementsQuery +
 				' return some $node in $selectableNodes satisfies . is $node',
-		selectedStructureViewItem
+		selectedStructureViewItem && selectedStructureViewItem.contextNodeId
 			? documentsManager.getNodeById(selectedStructureViewItem.contextNodeId)
 			: null,
 		{ expectedResultType: XPATH_RETURN_TYPES.BOOLEAN_TYPE }
