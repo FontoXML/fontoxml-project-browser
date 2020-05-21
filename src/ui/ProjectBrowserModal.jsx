@@ -19,12 +19,25 @@ import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocume
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
 import StructureView from 'fontoxml-structure/src/StructureView.jsx';
 import useOperation from 'fontoxml-fx/src/useOperation.js';
+import getNodeId from 'fontoxml-dom-identification/src/getNodeId.js';
 
 function ProjectBrowserModal({ cancelModal, data, submitModal }) {
-	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(() =>
-		getClosestStructureViewItem(data.nodeId)
+	const documentNode = documentsManager.getDocumentNode(data.documentId);
+	const documentNodeId =
+		documentNode && documentNode.documentElement
+			? getNodeId(documentNode.documentElement)
+			: null;
+
+	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(() => {
+		if (!data.nodeId) {
+			return getClosestStructureViewItem(documentNodeId);
+		}
+
+		return getClosestStructureViewItem(data.nodeId);
+	});
+	const [potentialLinkableElementId, setPotentialLinkableElementId] = useState(
+		data.nodeId !== null ? data.nodeId : documentNodeId
 	);
-	const [potentialLinkableElementId, setPotentialLinkableElementId] = useState(data.nodeId);
 
 	const currentHierarchyNode = useMemo(() => {
 		if (!selectedStructureViewItem) {
