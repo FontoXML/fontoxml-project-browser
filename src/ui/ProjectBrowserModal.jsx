@@ -13,7 +13,6 @@ import {
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy.js';
 import documentsManager from 'fontoxml-documents/src/documentsManager.js';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector.jsx';
-import useXPath, { XPATH_RETURN_TYPES } from 'fontoxml-fx/src/useXPath.js';
 import t from 'fontoxml-localization/src/t.js';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
@@ -53,29 +52,15 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		? selectedStructureViewItem.contextNodeId
 		: null;
 
-	const isElementLinkable = useXPath(
-		selectedStructureViewItem &&
-			selectedStructureViewItem.contextNodeId &&
-			'let $selectableNodes := ' +
-				data.linkableElementsQuery +
-				' return some $node in $selectableNodes satisfies . is $node',
-		selectedStructureViewItem && selectedStructureViewItem.contextNodeId
-			? documentsManager.getNodeById(selectedStructureViewItem.contextNodeId)
-			: null,
-		{ expectedResultType: XPATH_RETURN_TYPES.BOOLEAN_TYPE }
-	);
-
-	const linkableElementId = isElementLinkable ? potentialLinkableElementId : null;
-
 	const insertOperationInitialData = useMemo(() => {
 		return {
 			...data,
-			nodeId: linkableElementId,
+			nodeId: potentialLinkableElementId,
 			documentId: currentHierarchyNode
 				? currentHierarchyNode.documentReference.documentId
 				: null
 		};
-	}, [currentHierarchyNode, data, linkableElementId]);
+	}, [currentHierarchyNode, data, potentialLinkableElementId]);
 
 	const handleSubmitButtonClick = useCallback(() => {
 		submitModal({
@@ -147,11 +132,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		setPotentialLinkableElementId(nodeId);
 	}, []);
 
-	const operationName = (linkableElementId && data.insertOperationName) || 'do-nothing';
+	const operationName = (potentialLinkableElementId && data.insertOperationName) || 'do-nothing';
 
 	const { operationState } = useOperation(operationName, insertOperationInitialData);
 
-	const canSubmit = linkableElementId && operationState.enabled;
+	const canSubmit = potentialLinkableElementId && operationState.enabled;
 	const selectedDocumentId = currentHierarchyNode
 		? currentHierarchyNode.documentReference.documentId
 		: null;
@@ -197,7 +182,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 								documentId={selectedDocumentId}
 								onSelectedNodeChange={handlePreviewItemClick}
 								selector={data.linkableElementsQuery}
-								selectedNodeId={linkableElementId}
+								selectedNodeId={potentialLinkableElementId}
 								traversalRootNodeId={currentTraversalRootNodeId}
 							/>
 						</ModalContent>
