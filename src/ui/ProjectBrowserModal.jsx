@@ -12,13 +12,14 @@ import {
 
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy.js';
 import documentsManager from 'fontoxml-documents/src/documentsManager.js';
+import getNodeId from 'fontoxml-dom-identification/src/getNodeId.js';
+import domInfo from 'fontoxml-dom-utils/src/domInfo.js';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector.jsx';
+import useOperation from 'fontoxml-fx/src/useOperation.js';
 import t from 'fontoxml-localization/src/t.js';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
 import StructureView from 'fontoxml-structure/src/StructureView.jsx';
-import useOperation from 'fontoxml-fx/src/useOperation.js';
-import getNodeId from 'fontoxml-dom-identification/src/getNodeId.js';
 
 function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	const documentNode = documentsManager.getDocumentNode(data.documentId);
@@ -118,10 +119,22 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				);
 			}
 
-			initialDocumentsManager.retryLoadingDocumentForHierarchyNode(hierarchyNode).then(() =>
+			initialDocumentsManager.retryLoadingDocumentForHierarchyNode(hierarchyNode).then(() => {
 				// The hierarchy node should be updated now
-				setPotentialLinkableElementId(item.contextNodeId)
-			);
+				const hierarchyNode = documentsHierarchy.find(
+					n => n.getId() === item.hierarchyNodeId
+				);
+				if (hierarchyNode && hierarchyNode.documentReference) {
+					const traversalRootNode = hierarchyNode.documentReference.getTraversalRootNode();
+					setPotentialLinkableElementId(
+						getNodeId(
+							domInfo.isDocument(traversalRootNode)
+								? traversalRootNode.documentElement
+								: traversalRootNode
+						)
+					);
+				}
+			});
 			return;
 		}
 
