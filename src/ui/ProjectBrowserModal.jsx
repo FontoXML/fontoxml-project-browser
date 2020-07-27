@@ -66,9 +66,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			return null;
 		}
 
-		return documentsHierarchy.find(node => {
-			return node.getId() === selectedStructureViewItem.hierarchyNodeId;
-		});
+		return documentsHierarchy.get(selectedStructureViewItem.hierarchyNodeId);
 	}, [selectedStructureViewItem]);
 
 	const currentTraversalRootNodeId = selectedStructureViewItem
@@ -126,14 +124,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	const handleStructureViewItemClick = useCallback(item => {
 		setSelectedStructureViewItem(item);
 
-		const hierarchyNode = documentsHierarchy.find(
-			node => node.getId() === item.hierarchyNodeId && !!node.documentReference
-		);
-
+		const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
 		if (
 			hierarchyNode &&
-			(hierarchyNode.documentReference === null ||
-				!hierarchyNode.documentReference.isLoaded())
+			hierarchyNode.documentReference &&
+			!hierarchyNode.documentReference.isLoaded()
 		) {
 			// This hierarchy node has not been completely finished loading (yet)
 			// Make sure that it will
@@ -147,9 +142,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 
 			initialDocumentsManager.retryLoadingDocumentForHierarchyNode(hierarchyNode).then(() => {
 				// The hierarchy node should be updated now
-				const hierarchyNode = documentsHierarchy.find(
-					n => n.getId() === item.hierarchyNodeId
-				);
+				const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
 				if (hierarchyNode && hierarchyNode.documentReference) {
 					const traversalRootNode = hierarchyNode.documentReference.getTraversalRootNode();
 					const traversalRootNodeId = getNodeId(
