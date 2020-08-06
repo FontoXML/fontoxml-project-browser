@@ -1,4 +1,87 @@
 {
+	"open-project-browser-modal-with-multi-select": {
+		"__documentation": {
+			"summary": [
+				"Opens the project browser with multi select. The multi select is only for ",
+				"structure view items, elements can not be selected in the preview."
+			],
+			"fontosdk": true,
+			"category": "add-on/fontoxml-project-browser",
+			"params": [
+				{
+					"name": "insertOperationName",
+					"type": "string",
+					"description": [
+						"(Optional) The primary button will be disabled if the selected node can't",
+						"be inserted with the 'insert operation'.",
+						"",
+						"The operation data collected until the current operation together with the",
+						"selected node, will be added as initial data to the 'insert operation'."
+					]
+				},
+				{
+					"name": "modalIcon",
+					"type": "string",
+					"description": "(Optional) The icon to show at the top of the modal. This should be one of the [Fontawesome (v4.7.0)](https://fontawesome.com/v4.7.0/icons/) icons. Do not include the fa- prefix, just use the icon names as-is from the documentation."
+				},
+				{
+					"name": "modalPrimaryButtonLabel",
+					"type": "string",
+					"description": "(Optional) The label for the primary button. Defaults to `t__Insert`."
+				},
+				{
+					"name": "modalTitle",
+					"type": "string",
+					"description": "(Optional) The title being shown at the top of the modal. Defaults to `t__Select item(s)`."
+				},
+				{
+					"name": "showCheckboxSelector",
+					"type": "XPathTest",
+					"description": [
+						"(Optional) This selector decides which items of the structure view are ",
+						"selectable. This will be based on both the contextNode and the sourceNode ",
+						"(if there is one). For at least one of them `true` needs to be returned else ",
+						"the item will not be selectable. In the case of JIT loading a document ",
+						" could not be loaded,which means only the sourceNode will be available to ",
+						"determine whether the checkbox is selectable. An example which allows the ",
+						"user to select only whole documents, also in the case of JIT loading: ",
+						"`self::topic[not(parent::*)] or self::topicref`.",
+						"Defaults to `true()` which means all items of the structure view are selectable."
+					]
+				},
+				{
+					"name": "selectedItems",
+					"type": "Object[]",
+					"description": [
+						"(Optional) An array of the pre-selected items. Each item needs to be an ",
+						"object, this needs to be a hierarchyNodeId together with a contextNodeId. ",
+						"When the referred document is not loaded and the reference only points to ",
+						"the whole document, then the contextNodeId can be left out."
+					]
+				}
+			],
+			"returns": [
+				{
+					"name": "selectedItems",
+					"type": "Object[]",
+					"description": [
+						"An array of the selected items. Each item will be an object with a ",
+						"hierarchyNodeId together with a contextNodeId. Only when the item was ",
+						"already pre-selected and not loaded, the item will only contain a hierarchyNodeId."
+					]
+				}
+			]
+		},
+		"initialData": {
+			"showCheckboxSelector": "true()",
+			"modalPrimaryButtonLabel": "t__Insert",
+			"modalTitle": "t__Select item(s)"
+		},
+		"steps":
+		{
+			"type": "modal/ProjectBrowserModal"
+		}
+	},
 	"open-project-browser-modal": {
 		"__documentation": {
 			"summary": "Opens the project browser.",

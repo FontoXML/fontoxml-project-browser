@@ -10,7 +10,7 @@ This add-on exposes the {@link operation/open-project-browser-modal} operation f
 
 This add-on can be added to an editor by selecting the checkbox for this add-on in the [SDK portal](http://sdk.fontoxml.com/). Then install this add-on [as usual](https://developers.fontoxml.com/install-add-on).
 
-## Usage
+## Usage of open-project-browser-modal
 
 This browser can be used by adding the following operation step to your operation:
 
@@ -26,3 +26,21 @@ This browser can be used by adding the following operation step to your operatio
 * The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
 
 For more information, see {@link operation/open-project-browser-modal}.
+
+## Usage of open-project-browser-modal-with-multi-select
+
+This browser can be used by adding the following operation step to your operation:
+
+```
+{
+    "type": "operation/open-project-browser-modal-with-multi-select"
+}
+```
+
+* The structure view items which should be selectable by the user can be set by providing a `showCheckboxSelector`. This is an {@link XPathTest}.
+* When this modal is used to edit an existing link(s), the `selectedItems` property can be used to select the checkboxes on the structure view items.
+* Use `insertOperationName` to disable the primary button based on the operation state.
+* The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
+
+For more information, see {@link operation/open-project-browser-modal-with-multi-select}.
+
