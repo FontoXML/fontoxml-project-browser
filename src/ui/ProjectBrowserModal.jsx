@@ -94,7 +94,13 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				currentHierarchyNode
 			)
 		);
-	}, [currentHierarchyNode, potentialLinkableElementId, submitModal, selectedItems]);
+	}, [
+		currentHierarchyNode,
+		data.showCheckboxSelector,
+		potentialLinkableElementId,
+		selectedItems,
+		submitModal
+	]);
 
 	const handleKeyDownCancelOrSubmit = useCallback(
 		event => {
@@ -195,9 +201,9 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				newSelectedItems.splice(selectedNodeIndex, 1);
 			}
 			setSelectedItems(newSelectedItems);
-			handleStructureViewItemClick(node, newSelectedItems);
+			handleStructureViewItemClick(node);
 		},
-		[selectedItems]
+		[handleStructureViewItemClick, selectedItems]
 	);
 
 	const handlePreviewItemClick = useCallback(nodeId => {
@@ -206,7 +212,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 
 	const handleClearSelection = useCallback(() => {
 		setSelectedItems([]);
-	});
+	}, []);
 
 	const operationName =
 		((data.showCheckboxSelector || potentialLinkableElementId) && data.insertOperationName) ||
