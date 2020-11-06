@@ -129,6 +129,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 
 	const handleStructureViewItemClick = useCallback(item => {
 		setSelectedStructureViewItem(item);
+		setPotentialLinkableElementId(null);
 
 		const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
 		if (
