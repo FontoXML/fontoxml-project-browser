@@ -6,6 +6,7 @@ import {
 	Flex,
 	Modal,
 	ModalBody,
+	ModalBodyToolbar,
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
@@ -18,11 +19,13 @@ import getNodeId from 'fontoxml-dom-identification/src/getNodeId.js';
 import domInfo from 'fontoxml-dom-utils/src/domInfo.js';
 import FxNodePreview from 'fontoxml-fx/src/FxNodePreview.jsx';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector.jsx';
+import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons.jsx';
 import useOperation from 'fontoxml-fx/src/useOperation.js';
 import t from 'fontoxml-localization/src/t.js';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
 import StructureView from 'fontoxml-structure/src/StructureView.jsx';
+import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants.js';
 
 function getNewOperationData(
 	isMultiSelectEnabled,
@@ -236,6 +239,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			<ModalHeader icon={data.modalIcon} title={data.modalTitle} />
 
 			<ModalBody>
+				<ModalBodyToolbar>
+					<FxVirtualForestCollapseButtons
+						virtualForestManagerId={VIRTUAL_FOREST_MANAGER_ID}
+					/>
+				</ModalBodyToolbar>
 				<ModalContent>
 					<ModalContent flexDirection="column" flex="1" isScrollContainer>
 						<StructureView
