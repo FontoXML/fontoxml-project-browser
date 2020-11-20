@@ -64,6 +64,8 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	);
 	const [selectedItems, setSelectedItems] = useState(data.selectedItems || []);
 
+	const [isDocumentBroken, setIsDocumentBroken] = useState(false);
+
 	const currentHierarchyNode = useMemo(() => {
 		if (!selectedStructureViewItem) {
 			return null;
@@ -181,9 +183,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 					});
 				}
 			});
+			setIsDocumentBroken(true);
 			return;
 		}
 
+		setIsDocumentBroken(false);
 		setPotentialLinkableElementId(item.contextNodeId);
 	}, []);
 
@@ -230,6 +234,18 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		? currentHierarchyNode.documentReference.documentId
 		: null;
 
+	var stateIcon = 'hand-pointer-o';
+	var stateMessage = t('Select an item in the list to the left.');
+	var stateConnotation = 'muted';
+	var stateTitle = t('No item selected');
+
+	if (isDocumentBroken) {
+		stateIcon = 'fas fa-times';
+		stateMessage = t('Select a different item in the list to the left.');
+		stateConnotation = 'error';
+		stateTitle = t('This document could not be found');
+	}
+
 	return (
 		<Modal
 			isFullHeight
@@ -266,13 +282,12 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 										? t(
 												'Select an item to preview it and use the checkboxes to select items to insert.'
 										  )
-										: t('Select an item in the list to the left.')
+										: stateMessage
 								}
 								paddingSize="m"
-								title={t('No item selected')}
-								visual={
-									data.showCheckboxSelector ? 'check-square' : 'hand-pointer-o'
-								}
+								title={stateTitle}
+								visual={data.showCheckboxSelector ? 'check-square' : stateIcon}
+								connotation={stateConnotation}
 							/>
 						</ModalContent>
 					)}
