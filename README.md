@@ -44,3 +44,12 @@ This browser can be used by adding the following operation step to your operatio
 
 For more information, see {@link operation/open-project-browser-modal-with-multi-select}.
 
+# Contributing
+
+This package can serve as a base for custom versions of the project browser. It can be forked by
+checking it out directly in the `packages` folder of an editor. When making a fork, consider keeping
+it up-to-date with new Fonto Editor versions when they release.
+
+We highly appreciate pull requests if you find a bug. For more general improvements or new features,
+please file a [support.fontoxml.com](support request). That way, we can think along and make sure an
+improvement is made in a way that benefits all users of this package.
