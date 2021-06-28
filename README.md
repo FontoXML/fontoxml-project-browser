@@ -20,10 +20,10 @@ This browser can be used by adding the following operation step to your operatio
 }
 ```
 
-* The elements which should be selectable by the user can be set by providing a `linkableElementsQuery`. This is an {@link XPathQuery}.
-* When this modal is used to edit an existing link, the `documentId` and `nodeId` properties can be used to set the selection on the original document and element.
-* Use `insertOperationName` to disable the primary button based on the operation state.
-* The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
+-   The elements which should be selectable by the user can be set by providing a `linkableElementsQuery`. This is an {@link XPathQuery}.
+-   When this modal is used to edit an existing link, the `documentId` and `nodeId` properties can be used to set the selection on the original document and element.
+-   Use `insertOperationName` to disable the primary button based on the operation state.
+-   The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
 
 For more information, see {@link operation/open-project-browser-modal}.
 
@@ -37,10 +37,10 @@ This browser can be used by adding the following operation step to your operatio
 }
 ```
 
-* The structure view items which should be selectable by the user can be set by providing a `showCheckboxSelector`. This is an {@link XPathTest}.
-* When this modal is used to edit an existing link(s), the `selectedItems` property can be used to select the checkboxes on the structure view items.
-* Use `insertOperationName` to disable the primary button based on the operation state.
-* The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
+-   The structure view items which should be selectable by the user can be set by providing a `showCheckboxSelector`. This is an {@link XPathTest}.
+-   When this modal is used to edit an existing link(s), the `selectedItems` property can be used to select the checkboxes on the structure view items.
+-   Use `insertOperationName` to disable the primary button based on the operation state.
+-   The modal icon, title and primary button label can be set with the `modalIcon`, `modalTitle` and `modalPrimaryButtonLabel` respectively.
 
 For more information, see {@link operation/open-project-browser-modal-with-multi-select}.
 
