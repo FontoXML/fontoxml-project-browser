@@ -1,5 +1,3 @@
-import React, { useCallback, useMemo, useState } from 'react';
-
 import {
 	Button,
 	ButtonWithValue,
@@ -12,6 +10,7 @@ import {
 	ModalHeader,
 	StateMessage,
 } from 'fds/components';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
@@ -23,9 +22,9 @@ import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestColla
 import useOperation from 'fontoxml-fx/src/useOperation';
 import t from 'fontoxml-localization/src/t';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager';
+import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure/src/StructureView';
-import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants';
 
 function getNewOperationData(
 	isMultiSelectEnabled,
@@ -254,10 +253,10 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		? currentHierarchyNode.documentReference.documentId
 		: null;
 
-	var stateIcon = 'hand-pointer-o';
-	var stateMessage = t('Select an item in the list to the left.');
-	var stateConnotation = 'muted';
-	var stateTitle = t('No item selected');
+	let stateIcon = 'hand-pointer-o';
+	let stateMessage = t('Select an item in the list to the left.');
+	let stateConnotation = 'muted';
+	let stateTitle = t('No item selected');
 
 	if (isDocumentBroken) {
 		stateIcon = 'fas fa-times';
@@ -363,7 +362,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 					<Button label={t('Cancel')} onClick={cancelModal} />
 					{data.showCheckboxSelector && (
 						<ButtonWithValue
-							icon={'times'}
+							icon="times"
 							buttonLabel={t('Clear selection')}
 							onClick={handleClearSelection}
 							valueLabel={t(' {size} ', {
