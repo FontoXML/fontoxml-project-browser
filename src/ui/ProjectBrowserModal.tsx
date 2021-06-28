@@ -10,22 +10,22 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-	StateMessage
+	StateMessage,
 } from 'fds/components';
 
-import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy.js';
-import documentsManager from 'fontoxml-documents/src/documentsManager.js';
-import getNodeId from 'fontoxml-dom-identification/src/getNodeId.js';
-import domInfo from 'fontoxml-dom-utils/src/domInfo.js';
-import FxNodePreview from 'fontoxml-fx/src/FxNodePreview.jsx';
-import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector.jsx';
-import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons.jsx';
-import useOperation from 'fontoxml-fx/src/useOperation.js';
-import t from 'fontoxml-localization/src/t.js';
-import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager.js';
-import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem.js';
-import StructureView from 'fontoxml-structure/src/StructureView.jsx';
-import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants.js';
+import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
+import documentsManager from 'fontoxml-documents/src/documentsManager';
+import getNodeId from 'fontoxml-dom-identification/src/getNodeId';
+import domInfo from 'fontoxml-dom-utils/src/domInfo';
+import FxNodePreview from 'fontoxml-fx/src/FxNodePreview';
+import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
+import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons';
+import useOperation from 'fontoxml-fx/src/useOperation';
+import t from 'fontoxml-localization/src/t';
+import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager';
+import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem';
+import StructureView from 'fontoxml-structure/src/StructureView';
+import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants';
 
 function getNewOperationData(
 	isMultiSelectEnabled,
@@ -35,13 +35,13 @@ function getNewOperationData(
 ) {
 	return isMultiSelectEnabled
 		? {
-				selectedItems
+				selectedItems,
 		  }
 		: {
 				nodeId: potentialLinkableElementId,
 				documentId: currentHierarchyNode
 					? currentHierarchyNode.documentReference.documentId
-					: null
+					: null,
 		  };
 }
 
@@ -52,17 +52,20 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			? getNodeId(documentNode.documentElement)
 			: null;
 
-	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(() => {
-		if (!data.nodeId) {
-			return getClosestStructureViewItem(documentNodeId);
-		}
+	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(
+		() => {
+			if (!data.nodeId) {
+				return getClosestStructureViewItem(documentNodeId);
+			}
 
-		return getClosestStructureViewItem(data.nodeId);
-	});
-	const [potentialLinkableElementId, setPotentialLinkableElementId] = useState(
-		data.nodeId !== null ? data.nodeId : documentNodeId
+			return getClosestStructureViewItem(data.nodeId);
+		}
 	);
-	const [selectedItems, setSelectedItems] = useState(data.selectedItems || []);
+	const [potentialLinkableElementId, setPotentialLinkableElementId] =
+		useState(data.nodeId !== null ? data.nodeId : documentNodeId);
+	const [selectedItems, setSelectedItems] = useState(
+		data.selectedItems || []
+	);
 
 	const [isDocumentBroken, setIsDocumentBroken] = useState(false);
 
@@ -71,7 +74,9 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			return null;
 		}
 
-		return documentsHierarchy.get(selectedStructureViewItem.hierarchyNodeId);
+		return documentsHierarchy.get(
+			selectedStructureViewItem.hierarchyNodeId
+		);
 	}, [selectedStructureViewItem]);
 
 	const currentTraversalRootNodeId = selectedStructureViewItem
@@ -86,7 +91,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				selectedItems,
 				potentialLinkableElementId,
 				currentHierarchyNode
-			)
+			),
 		};
 	}, [currentHierarchyNode, data, potentialLinkableElementId, selectedItems]);
 
@@ -104,11 +109,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		data.showCheckboxSelector,
 		potentialLinkableElementId,
 		selectedItems,
-		submitModal
+		submitModal,
 	]);
 
 	const handleKeyDownCancelOrSubmit = useCallback(
-		event => {
+		(event) => {
 			switch (event.key) {
 				case 'Escape':
 					cancelModal();
@@ -122,7 +127,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	);
 
 	const handleKeyDownCancelOnly = useCallback(
-		event => {
+		(event) => {
 			switch (event.key) {
 				case 'Escape':
 					cancelModal();
@@ -132,7 +137,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		[cancelModal]
 	);
 
-	const handleStructureViewItemClick = useCallback(item => {
+	const handleStructureViewItemClick = useCallback((item) => {
 		setSelectedStructureViewItem(item);
 		setPotentialLinkableElementId(null);
 
@@ -144,7 +149,9 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		) {
 			// This hierarchy node has not been completely finished loading (yet)
 			// Make sure that it will
-			if (!initialDocumentsManager.canRetryLoadingDocumentForHierarchyNode()) {
+			if (
+				!initialDocumentsManager.canRetryLoadingDocumentForHierarchyNode()
+			) {
 				throw new Error(
 					'The hierarchy can not contain unloaded documents for editor instances' +
 						' that do not allow loading a single document.' +
@@ -152,37 +159,44 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				);
 			}
 
-			initialDocumentsManager.retryLoadingDocumentForHierarchyNode(hierarchyNode).then(() => {
-				// The hierarchy node should be updated now
-				const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
-				if (hierarchyNode && hierarchyNode.documentReference) {
-					const traversalRootNode = hierarchyNode.documentReference.getTraversalRootNode();
-					const traversalRootNodeId = getNodeId(
-						domInfo.isDocument(traversalRootNode)
-							? traversalRootNode.documentElement
-							: traversalRootNode
+			initialDocumentsManager
+				.retryLoadingDocumentForHierarchyNode(hierarchyNode)
+				.then(() => {
+					// The hierarchy node should be updated now
+					const hierarchyNode = documentsHierarchy.get(
+						item.hierarchyNodeId
 					);
-					setPotentialLinkableElementId(traversalRootNodeId);
-
-					// When an item is loaded at the contextNodeId to the selectedItem
-					setSelectedItems(prevSelectedItems => {
-						const selectedItemIndex = prevSelectedItems.findIndex(
-							selectedItem =>
-								!selectedItem.contextNodeId &&
-								selectedItem.hierarchyNodeId === item.hierarchyNodeId
+					if (hierarchyNode && hierarchyNode.documentReference) {
+						const traversalRootNode =
+							hierarchyNode.documentReference.getTraversalRootNode();
+						const traversalRootNodeId = getNodeId(
+							domInfo.isDocument(traversalRootNode)
+								? traversalRootNode.documentElement
+								: traversalRootNode
 						);
-						if (selectedItemIndex !== -1) {
-							const newSelectedItems = [...prevSelectedItems];
-							newSelectedItems[selectedItemIndex] = {
-								hierarchyNodeId: item.hierarchyNodeId,
-								contextNodeId: traversalRootNodeId
-							};
-							return newSelectedItems;
-						}
-						return prevSelectedItems;
-					});
-				}
-			});
+						setPotentialLinkableElementId(traversalRootNodeId);
+
+						// When an item is loaded at the contextNodeId to the selectedItem
+						setSelectedItems((prevSelectedItems) => {
+							const selectedItemIndex =
+								prevSelectedItems.findIndex(
+									(selectedItem) =>
+										!selectedItem.contextNodeId &&
+										selectedItem.hierarchyNodeId ===
+											item.hierarchyNodeId
+								);
+							if (selectedItemIndex !== -1) {
+								const newSelectedItems = [...prevSelectedItems];
+								newSelectedItems[selectedItemIndex] = {
+									hierarchyNodeId: item.hierarchyNodeId,
+									contextNodeId: traversalRootNodeId,
+								};
+								return newSelectedItems;
+							}
+							return prevSelectedItems;
+						});
+					}
+				});
 			setIsDocumentBroken(true);
 			return;
 		}
@@ -195,15 +209,16 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		({ node }) => {
 			const newSelectedItems = [...selectedItems];
 			const selectedNodeIndex = newSelectedItems.findIndex(
-				item =>
+				(item) =>
 					item.hierarchyNodeId === node.hierarchyNodeId &&
-					(!item.contextNodeId || item.contextNodeId === node.contextNodeId)
+					(!item.contextNodeId ||
+						item.contextNodeId === node.contextNodeId)
 			);
 
 			if (selectedNodeIndex === -1) {
 				newSelectedItems.push({
 					hierarchyNodeId: node.hierarchyNodeId,
-					contextNodeId: node.contextNodeId
+					contextNodeId: node.contextNodeId,
 				});
 			} else {
 				newSelectedItems.splice(selectedNodeIndex, 1);
@@ -214,7 +229,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		[handleStructureViewItemClick, selectedItems]
 	);
 
-	const handlePreviewItemClick = useCallback(nodeId => {
+	const handlePreviewItemClick = useCallback((nodeId) => {
 		setPotentialLinkableElementId(nodeId);
 	}, []);
 
@@ -223,13 +238,18 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	}, []);
 
 	const operationName =
-		((data.showCheckboxSelector || potentialLinkableElementId) && data.insertOperationName) ||
+		((data.showCheckboxSelector || potentialLinkableElementId) &&
+			data.insertOperationName) ||
 		'do-nothing';
 
-	const { operationState } = useOperation(operationName, insertOperationInitialData);
+	const { operationState } = useOperation(
+		operationName,
+		insertOperationInitialData
+	);
 
 	const canSubmit =
-		(data.showCheckboxSelector || potentialLinkableElementId) && operationState.enabled;
+		(data.showCheckboxSelector || potentialLinkableElementId) &&
+		operationState.enabled;
 	const selectedDocumentId = currentHierarchyNode
 		? currentHierarchyNode.documentReference.documentId
 		: null;
@@ -250,7 +270,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		<Modal
 			isFullHeight
 			size="l"
-			onKeyDown={canSubmit ? handleKeyDownCancelOrSubmit : handleKeyDownCancelOnly}
+			onKeyDown={
+				canSubmit
+					? handleKeyDownCancelOrSubmit
+					: handleKeyDownCancelOnly
+			}
 		>
 			<ModalHeader icon={data.modalIcon} title={data.modalTitle} />
 
@@ -261,7 +285,11 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 					/>
 				</ModalBodyToolbar>
 				<ModalContent>
-					<ModalContent flexDirection="column" flex="1" isScrollContainer>
+					<ModalContent
+						flexDirection="column"
+						flex="1"
+						isScrollContainer
+					>
 						<StructureView
 							onItemCheckboxClick={handleCheckboxClick}
 							onItemClick={handleStructureViewItemClick}
@@ -269,7 +297,8 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 							showCheckboxSelector={data.showCheckboxSelector}
 							selectedContextNodeId={currentTraversalRootNodeId}
 							selectedHierarchyNodeId={
-								currentHierarchyNode && currentHierarchyNode.getId()
+								currentHierarchyNode &&
+								currentHierarchyNode.getId()
 							}
 						/>
 					</ModalContent>
@@ -286,14 +315,20 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 								}
 								paddingSize="m"
 								title={stateTitle}
-								visual={data.showCheckboxSelector ? 'check-square' : stateIcon}
+								visual={
+									data.showCheckboxSelector
+										? 'check-square'
+										: stateIcon
+								}
 								connotation={stateConnotation}
 							/>
 						</ModalContent>
 					)}
 					{selectedDocumentId && (
 						<ModalContent
-							key={selectedDocumentId + currentTraversalRootNodeId}
+							key={
+								selectedDocumentId + currentTraversalRootNodeId
+							}
 							flex="2"
 							flexDirection="column"
 							isScrollContainer
@@ -301,15 +336,21 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 							{data.showCheckboxSelector ? (
 								<FxNodePreview
 									documentId={selectedDocumentId}
-									traversalRootNodeId={currentTraversalRootNodeId}
+									traversalRootNodeId={
+										currentTraversalRootNodeId
+									}
 								/>
 							) : (
 								<FxNodePreviewWithLinkSelector
 									documentId={selectedDocumentId}
-									onSelectedNodeChange={handlePreviewItemClick}
+									onSelectedNodeChange={
+										handlePreviewItemClick
+									}
 									selector={data.linkableElementsQuery}
 									selectedNodeId={potentialLinkableElementId}
-									traversalRootNodeId={currentTraversalRootNodeId}
+									traversalRootNodeId={
+										currentTraversalRootNodeId
+									}
 								/>
 							)}
 						</ModalContent>
@@ -326,7 +367,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 							buttonLabel={t('Clear selection')}
 							onClick={handleClearSelection}
 							valueLabel={t(' {size} ', {
-								size: selectedItems.length
+								size: selectedItems.length,
 							})}
 						/>
 					)}
