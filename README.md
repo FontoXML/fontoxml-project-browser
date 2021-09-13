@@ -1,5 +1,6 @@
 ---
 category: add-on/fontoxml-project-browser
+fontosdk: true
 ---
 
 # Project browser library
