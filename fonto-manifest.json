@@ -1,7 +1,6 @@
 {
 	"dependencies": {
-		"fontoxml-platform-base": "*",
-		"fontoxml-structure": "*"
+		"fontoxml-platform-base": "*"
 	},
-	"role": "internal"
+	"role": "add-on"
 }
