@@ -3,7 +3,7 @@
 		"__documentation": {
 			"summary": [
 				"Opens the project browser with multi select. The multi select is only for ",
-				"structure view items, elements can not be selected in the preview."
+				"Outline items, elements can not be selected in the preview."
 			],
 			"fontosdk": true,
 			"category": "add-on/fontoxml-project-browser",
@@ -38,7 +38,7 @@
 					"name": "showCheckboxSelector",
 					"type": "XPathTest",
 					"description": [
-						"(Optional) This selector decides which items of the structure view are ",
+						"(Optional) This selector decides which items of the Outline are ",
 						"selectable. This will be based on both the contextNode and the sourceNode ",
 						"(if there is one). For at least one of them `true` needs to be returned else ",
 						"the item will not be selectable. In the case of JIT loading a document ",
@@ -46,7 +46,7 @@
 						"determine whether the checkbox is selectable. An example which allows the ",
 						"user to select only whole documents, also in the case of JIT loading: ",
 						"`self::topic[not(parent::*)] or self::topicref`.",
-						"Defaults to `true()` which means all items of the structure view are selectable."
+						"Defaults to `true()` which means all items of the Outline are selectable."
 					]
 				},
 				{
