@@ -10,7 +10,8 @@ import {
 	ModalHeader,
 	StateMessage,
 } from 'fds/components';
-import React, { useCallback, useMemo, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
@@ -158,7 +159,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				);
 			}
 
-			initialDocumentsManager
+			void initialDocumentsManager
 				.retryLoadingDocumentForHierarchyNode(hierarchyNode)
 				.then(() => {
 					// The hierarchy node should be updated now
@@ -286,7 +287,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				<ModalContent>
 					<ModalContent
 						flexDirection="column"
-						flex="1"
+						flex={data.showCheckboxSelector ? '2' : '1'}
 						isScrollContainer
 					>
 						<StructureView
@@ -299,11 +300,16 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 								currentHierarchyNode &&
 								currentHierarchyNode.getId()
 							}
+							showNodeStatus
+							showRemoteDocumentState
 						/>
 					</ModalContent>
 
 					{!selectedDocumentId && (
-						<ModalContent flexDirection="column" flex="2">
+						<ModalContent
+							flexDirection="column"
+							flex={data.showCheckboxSelector ? '3' : '2'}
+						>
 							<StateMessage
 								message={
 									data.showCheckboxSelector
@@ -328,7 +334,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 							key={
 								selectedDocumentId + currentTraversalRootNodeId
 							}
-							flex="2"
+							flex={data.showCheckboxSelector ? '3' : '2'}
 							flexDirection="column"
 							isScrollContainer
 						>
@@ -358,26 +364,23 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			</ModalBody>
 
 			<ModalFooter>
-				<Flex spaceSize="m">
-					<Button label={t('Cancel')} onClick={cancelModal} />
+				<Button label={t('Cancel')} onClick={cancelModal} />
+				<Flex spaceSize="l">
 					{data.showCheckboxSelector && (
 						<ButtonWithValue
-							icon="times"
 							buttonLabel={t('Clear selection')}
 							onClick={handleClearSelection}
-							valueLabel={t(' {size} ', {
-								size: selectedItems.length,
-							})}
+							valueLabel={` ${selectedItems.length} `}
 						/>
 					)}
-				</Flex>
 
-				<Button
-					type="primary"
-					label={data.modalPrimaryButtonLabel}
-					isDisabled={!canSubmit}
-					onClick={handleSubmitButtonClick}
-				/>
+					<Button
+						type="primary"
+						label={data.modalPrimaryButtonLabel}
+						isDisabled={!canSubmit}
+						onClick={handleSubmitButtonClick}
+					/>
+				</Flex>
 			</ModalFooter>
 		</Modal>
 	);
