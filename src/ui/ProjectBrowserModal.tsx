@@ -17,7 +17,7 @@ import documentsManager from 'fontoxml-documents/src/documentsManager';
 import getNodeId from 'fontoxml-dom-identification/src/getNodeId';
 import domInfo from 'fontoxml-dom-utils/src/domInfo';
 import FxNodePreview from 'fontoxml-fx/src/FxNodePreview';
-import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
+import _FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
 import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons';
 import useOperation from 'fontoxml-fx/src/useOperation';
 import t from 'fontoxml-localization/src/t';
@@ -340,7 +340,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 									}
 								/>
 							) : (
-								<FxNodePreviewWithLinkSelector
+								<_FxNodePreviewWithLinkSelector
 									documentId={selectedDocumentId}
 									onSelectedNodeChange={
 										handlePreviewItemClick
