@@ -196,8 +196,9 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 							return prevSelectedItems;
 						});
 					}
-				});
-			setIsDocumentBroken(true);
+				})
+				.catch((_error) => setIsDocumentBroken(true));
+
 			return;
 		}
 
