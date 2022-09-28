@@ -23,9 +23,10 @@ import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestColla
 import useOperation from 'fontoxml-fx/src/useOperation';
 import t from 'fontoxml-localization/src/t';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager';
-import { VIRTUAL_FOREST_MANAGER_ID } from 'fontoxml-structure/src/constants';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure/src/StructureView';
+
+const INSTANCE_ID = 'structure-view-project-browser-modal-instance-id';
 
 function getNewOperationData(
 	isMultiSelectEnabled,
@@ -197,7 +198,9 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 						});
 					}
 				})
-				.catch((_error) => setIsDocumentBroken(true));
+				.catch((_error) => {
+					setIsDocumentBroken(true);
+				});
 
 			return;
 		}
@@ -282,7 +285,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			<ModalBody>
 				<ModalBodyToolbar>
 					<FxVirtualForestCollapseButtons
-						virtualForestManagerId={VIRTUAL_FOREST_MANAGER_ID}
+						virtualForestManagerId={INSTANCE_ID}
 					/>
 				</ModalBodyToolbar>
 				<ModalContent>
@@ -292,15 +295,16 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 						isScrollContainer
 					>
 						<StructureView
+							checkedItems={selectedItems}
+							instanceId={INSTANCE_ID}
 							onItemCheckboxClick={handleCheckboxClick}
 							onItemClick={handleStructureViewItemClick}
-							checkedItems={selectedItems}
-							showCheckboxSelector={data.showCheckboxSelector}
 							selectedContextNodeId={currentTraversalRootNodeId}
 							selectedHierarchyNodeId={
 								currentHierarchyNode &&
 								currentHierarchyNode.getId()
 							}
+							showCheckboxSelector={data.showCheckboxSelector}
 							showNodeStatus
 							showRemoteDocumentState
 						/>
