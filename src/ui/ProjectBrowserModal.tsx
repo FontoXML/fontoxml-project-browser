@@ -8,6 +8,7 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	SpinnerIcon,
 	StateMessage,
 } from 'fds/components';
 import * as React from 'react';
@@ -69,6 +70,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	);
 
 	const [isDocumentBroken, setIsDocumentBroken] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const currentHierarchyNode = useMemo(() => {
 		if (!selectedStructureViewItem) {
@@ -137,7 +139,6 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 		},
 		[cancelModal]
 	);
-
 	const handleStructureViewItemClick = useCallback((item) => {
 		setSelectedStructureViewItem(item);
 		setPotentialLinkableElementId(null);
@@ -163,6 +164,7 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			void initialDocumentsManager
 				.retryLoadingDocumentForHierarchyNode(hierarchyNode)
 				.then(() => {
+					setIsLoading(true);
 					// The hierarchy node should be updated now
 					const hierarchyNode = documentsHierarchy.get(
 						item.hierarchyNodeId
@@ -199,12 +201,13 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 					}
 				})
 				.catch((_error) => {
+					setIsLoading(false);
 					setIsDocumentBroken(true);
 				});
 
 			return;
 		}
-
+		setIsLoading(false);
 		setIsDocumentBroken(false);
 		setPotentialLinkableElementId(item.contextNodeId);
 	}, []);
@@ -263,13 +266,18 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 	let stateConnotation = 'muted';
 	let stateTitle = t('No item selected');
 
+	if (isLoading) {
+		stateIcon = <SpinnerIcon />;
+		stateMessage = null;
+		stateConnotation = null;
+		stateTitle = null;
+	}
 	if (isDocumentBroken) {
 		stateIcon = 'fas fa-times';
 		stateMessage = t('Select a different item in the list to the left.');
 		stateConnotation = 'error';
 		stateTitle = t('This document could not be found');
 	}
-
 	return (
 		<Modal
 			isFullHeight
