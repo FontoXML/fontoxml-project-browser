@@ -16,18 +16,29 @@ import { useCallback, useMemo, useState } from 'react';
 
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
+import type { DocumentId, HierarchyNodeId } from 'fontoxml-documents/src/types';
 import getNodeId from 'fontoxml-dom-identification/src/getNodeId';
+import type { NodeId } from 'fontoxml-dom-identification/src/types';
 import domInfo from 'fontoxml-dom-utils/src/domInfo';
+import type {
+	FontoDocumentNode,
+	FontoNode,
+} from 'fontoxml-dom-utils/src/types';
 import FxNodePreview from 'fontoxml-fx/src/FxNodePreview';
 import _FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
 import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons';
+import type { ModalProps } from 'fontoxml-fx/src/types';
 import useOperation from 'fontoxml-fx/src/useOperation';
 import t from 'fontoxml-localization/src/t';
+import type { OperationName } from 'fontoxml-operations/src/types';
 import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager';
+import type { XPathTest } from 'fontoxml-selectors/src/types';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure/src/StructureView';
 
 const INSTANCE_ID = 'structure-view-project-browser-modal-instance-id';
+
+type SelectedItem = { hierarchyNodeId: HierarchyNodeId; contextNodeId: NodeId };
 
 function getNewOperationData(
 	isMultiSelectEnabled,
@@ -47,8 +58,21 @@ function getNewOperationData(
 		  };
 }
 
-function ProjectBrowserModal({ cancelModal, data, submitModal }) {
-	const documentNode = documentsManager.getDocumentNode(data.documentId);
+const ProjectBrowserModal: React.FC<
+	ModalProps<{
+		documentId: DocumentId;
+		nodeId: NodeId;
+		selectedItems: SelectedItem[];
+		showCheckboxSelector: XPathTest;
+		insertOperationName: OperationName;
+		modalTitle: string;
+		modalIcon: string;
+		modalPrimaryButtonLabel: string;
+	}>
+> = ({ cancelModal, data, submitModal }) => {
+	const documentNode = documentsManager.getDocumentNode(
+		data.documentId
+	) as FontoDocumentNode<'readable'>;
 	const documentNodeId =
 		documentNode && documentNode.documentElement
 			? getNodeId(documentNode.documentElement)
@@ -161,17 +185,19 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 				);
 			}
 
+			setIsLoading(true);
+
 			void initialDocumentsManager
 				.retryLoadingDocumentForHierarchyNode(hierarchyNode)
 				.then(() => {
-					setIsLoading(true);
+					setIsLoading(false);
 					// The hierarchy node should be updated now
 					const hierarchyNode = documentsHierarchy.get(
 						item.hierarchyNodeId
 					);
 					if (hierarchyNode && hierarchyNode.documentReference) {
 						const traversalRootNode =
-							hierarchyNode.documentReference.getTraversalRootNode();
+							hierarchyNode.documentReference.getTraversalRootNode() as FontoNode<'readable'>;
 						const traversalRootNodeId = getNodeId(
 							domInfo.isDocument(traversalRootNode)
 								? traversalRootNode.documentElement
@@ -397,6 +423,6 @@ function ProjectBrowserModal({ cancelModal, data, submitModal }) {
 			</ModalFooter>
 		</Modal>
 	);
-}
+};
 
 export default ProjectBrowserModal;
