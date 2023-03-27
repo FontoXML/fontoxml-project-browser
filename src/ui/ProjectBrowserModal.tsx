@@ -1,3 +1,6 @@
+import * as React from 'react';
+import { useCallback, useMemo, useState } from 'react';
+
 import {
 	Button,
 	ButtonWithValue,
@@ -10,10 +13,7 @@ import {
 	ModalHeader,
 	SpinnerIcon,
 	StateMessage,
-} from 'fds/components';
-import * as React from 'react';
-import { useCallback, useMemo, useState } from 'react';
-
+} from 'fontoxml-design-system/src/components';
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
 import type { DocumentId, HierarchyNodeId } from 'fontoxml-documents/src/types';
