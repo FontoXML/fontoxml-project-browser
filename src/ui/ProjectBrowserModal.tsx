@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -58,7 +58,7 @@ function getNewOperationData(
 		  };
 }
 
-const ProjectBrowserModal: React.FC<
+const ProjectBrowserModal: FC<
 	ModalProps<{
 		documentId: DocumentId;
 		nodeId: NodeId;
