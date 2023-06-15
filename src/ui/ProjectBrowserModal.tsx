@@ -295,7 +295,7 @@ const ProjectBrowserModal: FC<
 	if (isLoading) {
 		stateIcon = <SpinnerIcon />;
 		stateMessage = null;
-		stateConnotation = null;
+		stateConnotation = 'muted';
 		stateTitle = null;
 	}
 	if (isDocumentBroken) {
