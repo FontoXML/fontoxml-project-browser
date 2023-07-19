@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -14,7 +14,9 @@ import {
 	SpinnerIcon,
 	StateMessage,
 } from 'fontoxml-design-system/src/components';
+import type { FdsStateMessageConnotation } from 'fontoxml-design-system/src/types';
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
+import type DocumentsHierarchyNode from 'fontoxml-documents/src/DocumentsHierarchyNode';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
 import type { DocumentId, HierarchyNodeId } from 'fontoxml-documents/src/types';
 import getNodeId from 'fontoxml-dom-identification/src/getNodeId';
@@ -25,7 +27,7 @@ import type {
 	FontoNode,
 } from 'fontoxml-dom-utils/src/types';
 import FxNodePreview from 'fontoxml-fx/src/FxNodePreview';
-import _FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
+import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
 import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons';
 import type { ModalProps } from 'fontoxml-fx/src/types';
 import useOperation from 'fontoxml-fx/src/useOperation';
@@ -41,10 +43,10 @@ const INSTANCE_ID = 'structure-view-project-browser-modal-instance-id';
 type SelectedItem = { hierarchyNodeId: HierarchyNodeId; contextNodeId: NodeId };
 
 function getNewOperationData(
-	isMultiSelectEnabled,
-	selectedItems,
-	potentialLinkableElementId,
-	currentHierarchyNode
+	isMultiSelectEnabled: boolean,
+	selectedItems: SelectedItem[],
+	potentialLinkableElementId: NodeId,
+	currentHierarchyNode: DocumentsHierarchyNode
 ) {
 	return isMultiSelectEnabled
 		? {
@@ -59,16 +61,21 @@ function getNewOperationData(
 }
 
 const ProjectBrowserModal: FC<
-	ModalProps<{
-		documentId: DocumentId;
-		nodeId: NodeId;
-		selectedItems: SelectedItem[];
-		showCheckboxSelector: XPathTest;
-		insertOperationName: OperationName;
-		modalTitle: string;
-		modalIcon: string;
-		modalPrimaryButtonLabel: string;
-	}>
+	ModalProps<
+		{
+			documentId: DocumentId;
+			insertOperationName: OperationName;
+			linkableElementsQuery?: string;
+			modalIcon: string;
+			modalPrimaryButtonLabel: string;
+			modalTitle: string;
+			nodeId: NodeId;
+			selectedItems: SelectedItem[];
+			showCheckboxSelector: XPathTest;
+		},
+		| { documentId: DocumentId; nodeId: NodeId }
+		| { selectedItems: SelectedItem[] }
+	>
 > = ({ cancelModal, data, submitModal }) => {
 	const documentNode = documentsManager.getDocumentNode(
 		data.documentId
@@ -287,9 +294,9 @@ const ProjectBrowserModal: FC<
 		? currentHierarchyNode.documentReference.documentId
 		: null;
 
-	let stateIcon = 'hand-pointer-o';
+	let stateIcon: ReactNode = 'hand-pointer-o';
 	let stateMessage = t('Select an item in the list to the left.');
-	let stateConnotation = 'muted';
+	let stateConnotation: FdsStateMessageConnotation = 'muted';
 	let stateTitle = t('No item selected');
 
 	if (isLoading) {
@@ -385,7 +392,7 @@ const ProjectBrowserModal: FC<
 									}
 								/>
 							) : (
-								<_FxNodePreviewWithLinkSelector
+								<FxNodePreviewWithLinkSelector
 									documentId={selectedDocumentId}
 									onSelectedNodeChange={
 										handlePreviewItemClick
