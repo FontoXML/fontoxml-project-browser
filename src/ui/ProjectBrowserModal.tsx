@@ -40,17 +40,17 @@ import StructureView from 'fontoxml-structure/src/StructureView';
 
 const INSTANCE_ID = 'structure-view-project-browser-modal-instance-id';
 
-type SelectedItem = { hierarchyNodeId: HierarchyNodeId; contextNodeId: NodeId };
+type CheckedItem = { hierarchyNodeId: HierarchyNodeId; contextNodeId: NodeId };
 
 function getNewOperationData(
 	isMultiSelectEnabled: boolean,
-	selectedItems: SelectedItem[],
+	checkedItems: CheckedItem[],
 	potentialLinkableElementId: NodeId,
 	currentHierarchyNode: DocumentsHierarchyNode
 ) {
 	return isMultiSelectEnabled
 		? {
-				selectedItems,
+				selectedItems: checkedItems,
 		  }
 		: {
 				nodeId: potentialLinkableElementId,
@@ -70,11 +70,11 @@ const ProjectBrowserModal: FC<
 			modalPrimaryButtonLabel: string;
 			modalTitle: string;
 			nodeId: NodeId;
-			selectedItems: SelectedItem[];
+			selectedItems: CheckedItem[];
 			showCheckboxSelector: XPathTest;
 		},
 		| { documentId: DocumentId; nodeId: NodeId }
-		| { selectedItems: SelectedItem[] }
+		| { selectedItems: CheckedItem[] }
 	>
 > = ({ cancelModal, data, submitModal }) => {
 	const documentNode = documentsManager.getDocumentNode(
@@ -96,9 +96,7 @@ const ProjectBrowserModal: FC<
 	);
 	const [potentialLinkableElementId, setPotentialLinkableElementId] =
 		useState(data.nodeId !== null ? data.nodeId : documentNodeId);
-	const [selectedItems, setSelectedItems] = useState(
-		data.selectedItems || []
-	);
+	const [checkedItems, setCheckedItems] = useState(data.selectedItems || []);
 
 	const [isDocumentBroken, setIsDocumentBroken] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -122,18 +120,18 @@ const ProjectBrowserModal: FC<
 			...data,
 			...getNewOperationData(
 				!!data.showCheckboxSelector,
-				selectedItems,
+				checkedItems,
 				potentialLinkableElementId,
 				currentHierarchyNode
 			),
 		};
-	}, [currentHierarchyNode, data, potentialLinkableElementId, selectedItems]);
+	}, [currentHierarchyNode, data, potentialLinkableElementId, checkedItems]);
 
 	const handleSubmitButtonClick = useCallback(() => {
 		submitModal(
 			getNewOperationData(
 				!!data.showCheckboxSelector,
-				selectedItems,
+				checkedItems,
 				potentialLinkableElementId,
 				currentHierarchyNode
 			)
@@ -142,7 +140,7 @@ const ProjectBrowserModal: FC<
 		currentHierarchyNode,
 		data.showCheckboxSelector,
 		potentialLinkableElementId,
-		selectedItems,
+		checkedItems,
 		submitModal,
 	]);
 
@@ -212,24 +210,24 @@ const ProjectBrowserModal: FC<
 						);
 						setPotentialLinkableElementId(traversalRootNodeId);
 
-						// When an item is loaded at the contextNodeId to the selectedItem
-						setSelectedItems((prevSelectedItems) => {
+						// When an item is loaded add the contextNodeId to the checkedItem
+						setCheckedItems((prevCheckedItems) => {
 							const selectedItemIndex =
-								prevSelectedItems.findIndex(
+								prevCheckedItems.findIndex(
 									(selectedItem) =>
 										!selectedItem.contextNodeId &&
 										selectedItem.hierarchyNodeId ===
 											item.hierarchyNodeId
 								);
 							if (selectedItemIndex !== -1) {
-								const newSelectedItems = [...prevSelectedItems];
+								const newSelectedItems = [...prevCheckedItems];
 								newSelectedItems[selectedItemIndex] = {
 									hierarchyNodeId: item.hierarchyNodeId,
 									contextNodeId: traversalRootNodeId,
 								};
 								return newSelectedItems;
 							}
-							return prevSelectedItems;
+							return prevCheckedItems;
 						});
 					}
 				})
@@ -247,26 +245,26 @@ const ProjectBrowserModal: FC<
 
 	const handleCheckboxClick = useCallback(
 		({ node }) => {
-			const newSelectedItems = [...selectedItems];
-			const selectedNodeIndex = newSelectedItems.findIndex(
+			const newCheckedItems = [...checkedItems];
+			const checkedItemIndex = newCheckedItems.findIndex(
 				(item) =>
 					item.hierarchyNodeId === node.hierarchyNodeId &&
 					(!item.contextNodeId ||
 						item.contextNodeId === node.contextNodeId)
 			);
 
-			if (selectedNodeIndex === -1) {
-				newSelectedItems.push({
+			if (checkedItemIndex === -1) {
+				newCheckedItems.push({
 					hierarchyNodeId: node.hierarchyNodeId,
 					contextNodeId: node.contextNodeId,
 				});
 			} else {
-				newSelectedItems.splice(selectedNodeIndex, 1);
+				newCheckedItems.splice(checkedItemIndex, 1);
 			}
-			setSelectedItems(newSelectedItems);
+			setCheckedItems(newCheckedItems);
 			handleStructureViewItemClick(node);
 		},
-		[handleStructureViewItemClick, selectedItems]
+		[handleStructureViewItemClick, checkedItems]
 	);
 
 	const handlePreviewItemClick = useCallback((nodeId) => {
@@ -274,7 +272,7 @@ const ProjectBrowserModal: FC<
 	}, []);
 
 	const handleClearSelection = useCallback(() => {
-		setSelectedItems([]);
+		setCheckedItems([]);
 	}, []);
 
 	const operationName =
@@ -336,7 +334,7 @@ const ProjectBrowserModal: FC<
 						isScrollContainer
 					>
 						<StructureView
-							checkedItems={selectedItems}
+							checkedItems={checkedItems}
 							instanceId={INSTANCE_ID}
 							onItemCheckboxClick={handleCheckboxClick}
 							onItemClick={handleStructureViewItemClick}
@@ -416,7 +414,7 @@ const ProjectBrowserModal: FC<
 						<ButtonWithValue
 							buttonLabel={t('Clear selection')}
 							onClick={handleClearSelection}
-							valueLabel={` ${selectedItems.length} `}
+							valueLabel={` ${checkedItems.length} `}
 						/>
 					)}
 
