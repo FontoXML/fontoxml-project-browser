@@ -169,7 +169,6 @@ const ProjectBrowserModal: FC<
 		[cancelModal]
 	);
 	const handleStructureViewItemClick = useCallback((item) => {
-		setSelectedStructureViewItem(item);
 		setPotentialLinkableElementId(null);
 
 		const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
@@ -230,17 +229,18 @@ const ProjectBrowserModal: FC<
 							return prevCheckedItems;
 						});
 					}
+					setSelectedStructureViewItem(item);
 				})
 				.catch((_error) => {
 					setIsLoading(false);
 					setIsDocumentBroken(true);
 				});
-
-			return;
+		} else {
+			setIsLoading(false);
+			setIsDocumentBroken(false);
+			setPotentialLinkableElementId(item.contextNodeId);
+			setSelectedStructureViewItem(item);
 		}
-		setIsLoading(false);
-		setIsDocumentBroken(false);
-		setPotentialLinkableElementId(item.contextNodeId);
 	}, []);
 
 	const handleCheckboxClick = useCallback(
