@@ -177,18 +177,6 @@ const ProjectBrowserModal: FC<
 			hierarchyNode.documentReference &&
 			!hierarchyNode.documentReference.isLoaded()
 		) {
-			// This hierarchy node has not been completely finished loading (yet)
-			// Make sure that it will
-			if (
-				!initialDocumentsManager.canRetryLoadingDocumentForHierarchyNode()
-			) {
-				throw new Error(
-					'The hierarchy can not contain unloaded documents for editor instances' +
-						' that do not allow loading a single document.' +
-						' Please implement the "retryLoadingDocumentForHierarchyNode" loading strategy.'
-				);
-			}
-
 			setIsLoading(true);
 
 			void initialDocumentsManager
