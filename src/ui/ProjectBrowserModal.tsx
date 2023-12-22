@@ -1,6 +1,8 @@
-import type { FC, ReactNode } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import type { ComponentProps, FC, ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import blueprintQuery from 'fontoxml-blueprints/src/blueprintQuery';
+import readOnlyBlueprint from 'fontoxml-blueprints/src/readOnlyBlueprint';
 import {
 	Button,
 	ButtonWithValue,
@@ -14,27 +16,29 @@ import {
 	SpinnerIcon,
 	StateMessage,
 } from 'fontoxml-design-system/src/components';
-import type { FdsStateMessageConnotation } from 'fontoxml-design-system/src/types';
+import type {
+	FdsOnKeyDownCallback,
+	FdsStateMessageConnotation,
+} from 'fontoxml-design-system/src/types';
 import documentsHierarchy from 'fontoxml-documents/src/documentsHierarchy';
-import type DocumentsHierarchyNode from 'fontoxml-documents/src/DocumentsHierarchyNode';
 import documentsManager from 'fontoxml-documents/src/documentsManager';
 import type { DocumentId, HierarchyNodeId } from 'fontoxml-documents/src/types';
 import getNodeId from 'fontoxml-dom-identification/src/getNodeId';
 import type { NodeId } from 'fontoxml-dom-identification/src/types';
 import domInfo from 'fontoxml-dom-utils/src/domInfo';
-import type {
-	FontoDocumentNode,
-	FontoNode,
-} from 'fontoxml-dom-utils/src/types';
+import type { FontoNode } from 'fontoxml-dom-utils/src/types';
 import FxNodePreview from 'fontoxml-fx/src/FxNodePreview';
 import FxNodePreviewWithLinkSelector from 'fontoxml-fx/src/FxNodePreviewWithLinkSelector';
 import FxVirtualForestCollapseButtons from 'fontoxml-fx/src/FxVirtualForestCollapseButtons';
 import type { ModalProps } from 'fontoxml-fx/src/types';
+import useDocumentLoader from 'fontoxml-fx/src/useDocumentLoader';
+import useManagerState from 'fontoxml-fx/src/useManagerState';
 import useOperation from 'fontoxml-fx/src/useOperation';
 import t from 'fontoxml-localization/src/t';
 import type { OperationName } from 'fontoxml-operations/src/types';
-import initialDocumentsManager from 'fontoxml-remote-documents/src/initialDocumentsManager';
+import evaluateXPathToBoolean from 'fontoxml-selectors/src/evaluateXPathToBoolean';
 import type { XPathTest } from 'fontoxml-selectors/src/types';
+import xq, { ensureXQExpression } from 'fontoxml-selectors/src/xq';
 import getClosestStructureViewItem from 'fontoxml-structure/src/getClosestStructureViewItem';
 import StructureView from 'fontoxml-structure/src/StructureView';
 
@@ -42,196 +46,108 @@ const INSTANCE_ID = 'structure-view-project-browser-modal-instance-id';
 
 type CheckedItem = { hierarchyNodeId: HierarchyNodeId; contextNodeId: NodeId };
 
-function getNewOperationData(
-	isMultiSelectEnabled: boolean,
-	checkedItems: CheckedItem[],
-	potentialLinkableElementId: NodeId,
-	currentHierarchyNode: DocumentsHierarchyNode
-) {
-	return isMultiSelectEnabled
-		? {
-				selectedItems: checkedItems,
-		  }
-		: {
-				nodeId: potentialLinkableElementId,
-				documentId: currentHierarchyNode
-					? currentHierarchyNode.documentReference.documentId
-					: null,
-		  };
-}
+type IncomingModalData = {
+	documentId: DocumentId;
+	insertOperationName: OperationName;
+	linkableElementsQuery?: string;
+	modalIcon: string;
+	modalPrimaryButtonLabel: string;
+	modalTitle: string;
+	nodeId: NodeId;
+	selectedItems: CheckedItem[];
+	showCheckboxSelector: XPathTest;
+};
+type SubmittedModalData =
+	// if IncomingModalData.showCheckboxSelector === false
+	| { documentId: DocumentId; nodeId: NodeId }
+	// else if IncomingModalData.showCheckboxSelector === true
+	| { selectedItems: CheckedItem[] };
 
 const ProjectBrowserModal: FC<
-	ModalProps<
-		{
-			documentId: DocumentId;
-			insertOperationName: OperationName;
-			linkableElementsQuery?: string;
-			modalIcon: string;
-			modalPrimaryButtonLabel: string;
-			modalTitle: string;
-			nodeId: NodeId;
-			selectedItems: CheckedItem[];
-			showCheckboxSelector: XPathTest;
-		},
-		| { documentId: DocumentId; nodeId: NodeId }
-		| { selectedItems: CheckedItem[] }
-	>
+	ModalProps<IncomingModalData, SubmittedModalData>
 > = ({ cancelModal, data, submitModal }) => {
-	const documentNode = documentsManager.getDocumentNode(
-		data.documentId
-	) as FontoDocumentNode<'readable'>;
-	const documentNodeId =
-		documentNode && documentNode.documentElement
-			? getNodeId(documentNode.documentElement)
-			: null;
+	const [nodeId, setNodeId] = useState(() => {
+		if (data.nodeId) {
+			return data.nodeId;
+		}
+		if (!data.documentId) {
+			return undefined;
+		}
+		const documentNode = documentsManager.getDocumentNode(data.documentId);
+		if (!documentNode) {
+			return undefined;
+		}
+		const documentElement = blueprintQuery.findChild(
+			readOnlyBlueprint,
+			documentNode,
+			domInfo.isElement
+		);
+		if (!documentElement) {
+			return undefined;
+		}
+		return getNodeId(documentElement);
+	});
 
 	const [selectedStructureViewItem, setSelectedStructureViewItem] = useState(
-		() => {
-			if (!data.nodeId) {
-				return getClosestStructureViewItem(documentNodeId);
-			}
-
-			return getClosestStructureViewItem(data.nodeId);
-		}
-	);
-	const [potentialLinkableElementId, setPotentialLinkableElementId] =
-		useState(data.nodeId !== null ? data.nodeId : documentNodeId);
-	const [checkedItems, setCheckedItems] = useState(data.selectedItems || []);
-
-	const [isDocumentBroken, setIsDocumentBroken] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-
-	const currentHierarchyNode = useMemo(() => {
-		if (!selectedStructureViewItem) {
-			return null;
-		}
-
-		return documentsHierarchy.get(
-			selectedStructureViewItem.hierarchyNodeId
-		);
-	}, [selectedStructureViewItem]);
-
-	const currentTraversalRootNodeId = selectedStructureViewItem
-		? selectedStructureViewItem.contextNodeId
-		: null;
-
-	const insertOperationInitialData = useMemo(() => {
-		return {
-			...data,
-			...getNewOperationData(
-				!!data.showCheckboxSelector,
-				checkedItems,
-				potentialLinkableElementId,
-				currentHierarchyNode
-			),
-		};
-	}, [currentHierarchyNode, data, potentialLinkableElementId, checkedItems]);
-
-	const handleSubmitButtonClick = useCallback(() => {
-		submitModal(
-			getNewOperationData(
-				!!data.showCheckboxSelector,
-				checkedItems,
-				potentialLinkableElementId,
-				currentHierarchyNode
-			)
-		);
-	}, [
-		currentHierarchyNode,
-		data.showCheckboxSelector,
-		potentialLinkableElementId,
-		checkedItems,
-		submitModal,
-	]);
-
-	const handleKeyDownCancelOrSubmit = useCallback(
-		(event) => {
-			switch (event.key) {
-				case 'Escape':
-					cancelModal();
-					break;
-				case 'Enter':
-					handleSubmitButtonClick();
-					break;
-			}
-		},
-		[cancelModal, handleSubmitButtonClick]
+		() => (nodeId ? getClosestStructureViewItem(nodeId) : null)
 	);
 
-	const handleKeyDownCancelOnly = useCallback(
-		(event) => {
-			switch (event.key) {
-				case 'Escape':
-					cancelModal();
-					break;
-			}
-		},
-		[cancelModal]
-	);
-	const handleStructureViewItemClick = useCallback((item) => {
-		setPotentialLinkableElementId(null);
-
-		const hierarchyNode = documentsHierarchy.get(item.hierarchyNodeId);
-		if (
-			hierarchyNode &&
-			hierarchyNode.documentReference &&
-			!hierarchyNode.documentReference.isLoaded()
-		) {
-			setIsLoading(true);
-
-			void initialDocumentsManager
-				.retryLoadingDocumentForHierarchyNode(hierarchyNode)
-				.then(() => {
-					setIsLoading(false);
-					// The hierarchy node should be updated now
-					const hierarchyNode = documentsHierarchy.get(
-						item.hierarchyNodeId
-					);
-					if (hierarchyNode && hierarchyNode.documentReference) {
-						const traversalRootNode =
-							hierarchyNode.documentReference.getTraversalRootNode() as FontoNode<'readable'>;
-						const traversalRootNodeId = getNodeId(
-							domInfo.isDocument(traversalRootNode)
-								? traversalRootNode.documentElement
-								: traversalRootNode
-						);
-						setPotentialLinkableElementId(traversalRootNodeId);
-
-						// When an item is loaded add the contextNodeId to the checkedItem
-						setCheckedItems((prevCheckedItems) => {
-							const selectedItemIndex =
-								prevCheckedItems.findIndex(
-									(selectedItem) =>
-										!selectedItem.contextNodeId &&
-										selectedItem.hierarchyNodeId ===
-											item.hierarchyNodeId
-								);
-							if (selectedItemIndex !== -1) {
-								const newSelectedItems = [...prevCheckedItems];
-								newSelectedItems[selectedItemIndex] = {
-									hierarchyNodeId: item.hierarchyNodeId,
-									contextNodeId: traversalRootNodeId,
-								};
-								return newSelectedItems;
-							}
-							return prevCheckedItems;
-						});
-					}
-					setSelectedStructureViewItem(item);
-				})
-				.catch((_error) => {
-					setIsLoading(false);
-					setIsDocumentBroken(true);
-				});
-		} else {
-			setIsLoading(false);
-			setIsDocumentBroken(false);
-			setPotentialLinkableElementId(item.contextNodeId);
-			setSelectedStructureViewItem(item);
-		}
+	const handleStructureViewItemClick = useCallback<
+		Exclude<ComponentProps<typeof StructureView>['onItemClick'], undefined>
+	>((item) => {
+		setSelectedStructureViewItem(item);
+		// Clear the local derived state based on the previously selected/loaded
+		// structure view item. This is no longer relevant.
+		setNodeId(undefined);
 	}, []);
 
-	const handleCheckboxClick = useCallback(
+	const { isLoading, documentId, error } = useDocumentLoader(
+		null,
+		null,
+		selectedStructureViewItem?.hierarchyNodeId ?? null
+	);
+
+	// Reset the nodeId to the traversalRootNode after the
+	// selectedStructureViewItem?.hierarchyNodeId changes and the corresponding
+	// document is loaded (documentId from useDocumentLoader exists).
+	useEffect(() => {
+		if (
+			!nodeId &&
+			selectedStructureViewItem?.hierarchyNodeId &&
+			documentId
+		) {
+			const rootNode: FontoNode | null =
+				documentsHierarchy
+					.get(selectedStructureViewItem?.hierarchyNodeId)
+					?.documentReference?.getTraversalRootNode() ?? null;
+			if (
+				rootNode &&
+				evaluateXPathToBoolean(
+					xq`let $selectableNodes := ${ensureXQExpression(
+						data.linkableElementsQuery ?? '//*[@id]'
+					)} return some $node in $selectableNodes satisfies . is $node`,
+					rootNode,
+					readOnlyBlueprint
+				)
+			) {
+				setNodeId(getNodeId(rootNode));
+			}
+		}
+	}, [
+		data.linkableElementsQuery,
+		documentId,
+		nodeId,
+		selectedStructureViewItem?.hierarchyNodeId,
+	]);
+
+	const [checkedItems, setCheckedItems] = useState(data.selectedItems || []);
+
+	const handleCheckboxClick = useCallback<
+		Exclude<
+			ComponentProps<typeof StructureView>['onItemCheckboxClick'],
+			undefined
+		>
+	>(
 		({ node }) => {
 			const newCheckedItems = [...checkedItems];
 			const checkedItemIndex = newCheckedItems.findIndex(
@@ -243,8 +159,8 @@ const ProjectBrowserModal: FC<
 
 			if (checkedItemIndex === -1) {
 				newCheckedItems.push({
-					hierarchyNodeId: node.hierarchyNodeId,
 					contextNodeId: node.contextNodeId,
+					hierarchyNodeId: node.hierarchyNodeId,
 				});
 			} else {
 				newCheckedItems.splice(checkedItemIndex, 1);
@@ -255,59 +171,178 @@ const ProjectBrowserModal: FC<
 		[handleStructureViewItemClick, checkedItems]
 	);
 
-	const handlePreviewItemClick = useCallback((nodeId) => {
-		setPotentialLinkableElementId(nodeId);
+	const handlePreviewItemClick = useCallback<
+		Exclude<
+			ComponentProps<
+				typeof FxNodePreviewWithLinkSelector
+			>['onSelectedNodeChange'],
+			undefined
+		>
+	>((nodeId) => {
+		setNodeId(nodeId);
 	}, []);
+
+	const contextNodeIdByHierarchyNodeId = useManagerState(
+		documentsHierarchy.hierarchyChangedNotifier,
+		() => {
+			const contextNodeIdByHierarchyNodeId = new Map<
+				HierarchyNodeId,
+				NodeId
+			>();
+
+			if (!data.showCheckboxSelector) {
+				return contextNodeIdByHierarchyNodeId;
+			}
+
+			documentsHierarchy.find((hierarchyNode) => {
+				const traversalRootNode =
+					hierarchyNode.documentReference?.getTraversalRootNode();
+				if (traversalRootNode) {
+					const contextNode = domInfo.isDocument(traversalRootNode)
+						? blueprintQuery.findChild(
+								readOnlyBlueprint,
+								traversalRootNode,
+								domInfo.isElement
+						  )
+						: traversalRootNode;
+					const contextNodeId = contextNode
+						? getNodeId(contextNode)
+						: undefined;
+					if (contextNodeId) {
+						contextNodeIdByHierarchyNodeId.set(
+							hierarchyNode.getId(),
+							contextNodeId
+						);
+					}
+				}
+				return false;
+			});
+
+			return contextNodeIdByHierarchyNodeId;
+		}
+	);
+
+	const dataToSubmit = useMemo<SubmittedModalData | undefined>(() => {
+		return data.showCheckboxSelector
+			? {
+					selectedItems: checkedItems.map((checkedItem) => {
+						const contextNodeId =
+							contextNodeIdByHierarchyNodeId.get(
+								checkedItem.hierarchyNodeId
+							);
+						if (!checkedItem.contextNodeId && contextNodeId) {
+							checkedItem.contextNodeId = contextNodeId;
+						}
+
+						return checkedItem;
+					}),
+			  }
+			: documentId && nodeId
+			? { documentId, nodeId }
+			: undefined;
+	}, [
+		checkedItems,
+		contextNodeIdByHierarchyNodeId,
+		data.showCheckboxSelector,
+		documentId,
+		nodeId,
+	]);
+
+	const operationData = useMemo(
+		() => ({ ...data, ...dataToSubmit }),
+		[data, dataToSubmit]
+	);
+
+	const { operationState } = useOperation(
+		data.insertOperationName,
+		operationData
+	);
+
+	const isSubmitButtonDisabled = useMemo(
+		() =>
+			data.showCheckboxSelector
+				? checkedItems.length === 0
+				: !selectedStructureViewItem ||
+				  !documentId ||
+				  !nodeId ||
+				  !operationState.enabled,
+		[
+			checkedItems.length,
+			data.showCheckboxSelector,
+			documentId,
+			nodeId,
+			operationState.enabled,
+			selectedStructureViewItem,
+		]
+	);
+
+	const handleKeyDownCancelOrSubmit = useCallback<FdsOnKeyDownCallback>(
+		(event) => {
+			switch (event.key) {
+				case 'Escape':
+					cancelModal();
+					break;
+				case 'Enter':
+					if (!isSubmitButtonDisabled) {
+						// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-non-null-assertion
+						submitModal(dataToSubmit!);
+					}
+					break;
+			}
+		},
+		[cancelModal, dataToSubmit, isSubmitButtonDisabled, submitModal]
+	);
 
 	const handleClearSelection = useCallback(() => {
 		setCheckedItems([]);
 	}, []);
 
-	const operationName =
-		((data.showCheckboxSelector || potentialLinkableElementId) &&
-			data.insertOperationName) ||
-		'do-nothing';
+	const handleSubmitButtonClick = useCallback(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-non-null-assertion
+		submitModal(dataToSubmit!);
+	}, [dataToSubmit, submitModal]);
 
-	const { operationState } = useOperation(
-		operationName,
-		insertOperationInitialData
-	);
+	const stateMessage = useMemo(() => {
+		const stateMessage: {
+			connotation: FdsStateMessageConnotation;
+			message: string;
+			title: string;
+			visual: ReactNode;
+		} = {
+			connotation: 'muted',
+			message: data.showCheckboxSelector
+				? t(
+						'Select an item to preview it and use the checkboxes to select items to insert.'
+				  )
+				: t('Select an item in the list to the left.'),
+			title: t('No item selected'),
+			visual: data.showCheckboxSelector
+				? 'check-square'
+				: 'hand-pointer-o',
+		};
 
-	const canSubmit =
-		(data.showCheckboxSelector || potentialLinkableElementId) &&
-		operationState.enabled;
-	const selectedDocumentId = currentHierarchyNode
-		? currentHierarchyNode.documentReference.documentId
-		: null;
+		if (isLoading) {
+			stateMessage.connotation = 'muted';
+			stateMessage.message = '';
+			stateMessage.title = '';
+			stateMessage.visual = <SpinnerIcon />;
+		}
 
-	let stateIcon: ReactNode = 'hand-pointer-o';
-	let stateMessage = t('Select an item in the list to the left.');
-	let stateConnotation: FdsStateMessageConnotation = 'muted';
-	let stateTitle = t('No item selected');
+		if (error) {
+			stateMessage.connotation = 'error';
+			stateMessage.message = t(
+				'Select a different item in the list to the left.'
+			);
+			stateMessage.title = t('This document could not be found');
+			stateMessage.visual = 'fas fa-times';
+		}
 
-	if (isLoading) {
-		stateIcon = <SpinnerIcon />;
-		stateMessage = null;
-		stateConnotation = 'muted';
-		stateTitle = null;
-	}
-	if (isDocumentBroken) {
-		stateIcon = 'fas fa-times';
-		stateMessage = t('Select a different item in the list to the left.');
-		stateConnotation = 'error';
-		stateTitle = t('This document could not be found');
-	}
+		return stateMessage;
+	}, [data.showCheckboxSelector, error, isLoading]);
+
 	return (
-		<Modal
-			isFullHeight
-			size="l"
-			onKeyDown={
-				canSubmit
-					? handleKeyDownCancelOrSubmit
-					: handleKeyDownCancelOnly
-			}
-		>
-			<ModalHeader icon={data.modalIcon} title={data.modalTitle} />
+		<Modal isFullHeight size="l" onKeyDown={handleKeyDownCancelOrSubmit}>
+			<ModalHeader icon={data.modalIcon} title={data.modalTitle || ''} />
 
 			<ModalBody>
 				<ModalBodyToolbar>
@@ -315,21 +350,24 @@ const ProjectBrowserModal: FC<
 						virtualForestManagerId={INSTANCE_ID}
 					/>
 				</ModalBodyToolbar>
+
 				<ModalContent>
 					<ModalContent
 						flexDirection="column"
 						flex={data.showCheckboxSelector ? '2' : '1'}
 						isScrollContainer
+						spaceSize="l"
 					>
 						<StructureView
 							checkedItems={checkedItems}
 							instanceId={INSTANCE_ID}
 							onItemCheckboxClick={handleCheckboxClick}
 							onItemClick={handleStructureViewItemClick}
-							selectedContextNodeId={currentTraversalRootNodeId}
+							selectedContextNodeId={
+								selectedStructureViewItem?.contextNodeId
+							}
 							selectedHierarchyNodeId={
-								currentHierarchyNode &&
-								currentHierarchyNode.getId()
+								selectedStructureViewItem?.hierarchyNodeId
 							}
 							showCheckboxSelector={data.showCheckboxSelector}
 							showNodeStatus
@@ -337,66 +375,49 @@ const ProjectBrowserModal: FC<
 						/>
 					</ModalContent>
 
-					{!selectedDocumentId && (
-						<ModalContent
-							flexDirection="column"
-							flex={data.showCheckboxSelector ? '3' : '2'}
-						>
+					<ModalContent
+						flex={data.showCheckboxSelector ? '3' : '2'}
+						flexDirection="column"
+						isScrollContainer
+					>
+						{!documentId || isLoading || error ? (
 							<StateMessage
-								message={
-									data.showCheckboxSelector
-										? t(
-												'Select an item to preview it and use the checkboxes to select items to insert.'
-										  )
-										: stateMessage
-								}
+								connotation={stateMessage.connotation}
+								message={stateMessage.message}
 								paddingSize="m"
-								title={stateTitle}
-								visual={
-									data.showCheckboxSelector
-										? 'check-square'
-										: stateIcon
-								}
-								connotation={stateConnotation}
+								title={stateMessage.title}
+								visual={stateMessage.visual}
 							/>
-						</ModalContent>
-					)}
-					{selectedDocumentId && (
-						<ModalContent
-							key={
-								selectedDocumentId + currentTraversalRootNodeId
-							}
-							flex={data.showCheckboxSelector ? '3' : '2'}
-							flexDirection="column"
-							isScrollContainer
-						>
-							{data.showCheckboxSelector ? (
-								<FxNodePreview
-									documentId={selectedDocumentId}
-									traversalRootNodeId={
-										currentTraversalRootNodeId
-									}
-								/>
-							) : (
-								<FxNodePreviewWithLinkSelector
-									documentId={selectedDocumentId}
-									onSelectedNodeChange={
-										handlePreviewItemClick
-									}
-									selector={data.linkableElementsQuery}
-									selectedNodeId={potentialLinkableElementId}
-									traversalRootNodeId={
-										currentTraversalRootNodeId
-									}
-								/>
-							)}
-						</ModalContent>
-					)}
+						) : data.showCheckboxSelector ? (
+							<FxNodePreview
+								documentId={documentId}
+								traversalRootNodeId={
+									selectedStructureViewItem?.contextNodeId
+								}
+							/>
+						) : (
+							<FxNodePreviewWithLinkSelector
+								documentId={documentId}
+								hierarchyNodeId={
+									selectedStructureViewItem?.hierarchyNodeId
+								}
+								onSelectedNodeChange={handlePreviewItemClick}
+								selector={
+									data.linkableElementsQuery ?? '//*[@id]'
+								}
+								selectedNodeId={nodeId}
+								traversalRootNodeId={
+									selectedStructureViewItem?.contextNodeId
+								}
+							/>
+						)}
+					</ModalContent>
 				</ModalContent>
 			</ModalBody>
 
 			<ModalFooter>
 				<Button label={t('Cancel')} onClick={cancelModal} />
+
 				<Flex spaceSize="l">
 					{data.showCheckboxSelector && (
 						<ButtonWithValue
@@ -409,7 +430,7 @@ const ProjectBrowserModal: FC<
 					<Button
 						type="primary"
 						label={data.modalPrimaryButtonLabel}
-						isDisabled={!canSubmit}
+						isDisabled={isSubmitButtonDisabled}
 						onClick={handleSubmitButtonClick}
 					/>
 				</Flex>

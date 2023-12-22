@@ -73,9 +73,10 @@
 			]
 		},
 		"initialData": {
-			"showCheckboxSelector": "true()",
+			"linkableElementsQuery": "//*[@id]",
 			"modalPrimaryButtonLabel": "t__Insert",
-			"modalTitle": "t__Select item(s)"
+			"modalTitle": "t__Select item(s)",
+			"showCheckboxSelector": "true()"
 		},
 		"steps": {
 			"type": "modal/ProjectBrowserModal"
